@@ -6,36 +6,25 @@ SELECT
     sp.salary_month,
     sp.year,
     e.base_salary,
-    (SELECT IFNULL(SUM(amount),0) FROM bonus_deductions bd 
-        WHERE bd.employee_id = e.employee_id 
-          AND bd.bd_type = 'Bonus'
-          AND YEAR(bd.effective_date) = sp.year 
-          AND MONTH(bd.effective_date) = MONTH(STR_TO_DATE(sp.salary_month, '%M'))
-    ) AS total_bonus,
-    (SELECT IFNULL(SUM(amount),0) FROM bonus_deductions bd 
-        WHERE bd.employee_id = e.employee_id 
-          AND bd.bd_type = 'Deduction'
-          AND YEAR(bd.effective_date) = sp.year 
-          AND MONTH(bd.effective_date) = MONTH(STR_TO_DATE(sp.salary_month, '%M'))
-    ) AS total_deduction,
-    (e.base_salary 
-       + (SELECT IFNULL(SUM(amount),0) FROM bonus_deductions bd 
-            WHERE bd.employee_id = e.employee_id 
-              AND bd.bd_type = 'Bonus'
-              AND YEAR(bd.effective_date) = sp.year 
-              AND MONTH(bd.effective_date) = MONTH(STR_TO_DATE(sp.salary_month, '%M'))
-          )
-       - (SELECT IFNULL(SUM(amount),0) FROM bonus_deductions bd 
-            WHERE bd.employee_id = e.employee_id 
-              AND bd.bd_type = 'Deduction'
-              AND YEAR(bd.effective_date) = sp.year 
-              AND MONTH(bd.effective_date) = MONTH(STR_TO_DATE(sp.salary_month, '%M'))
-          )
-    ) AS net_amount,
+    COALESCE(bd.total_bonus, 0) AS total_bonus,
+    COALESCE(bd.total_deduction, 0) AS total_deduction,
+    (e.base_salary + COALESCE(bd.total_bonus, 0) - COALESCE(bd.total_deduction, 0)) AS net_amount,
     sp.total_amount AS recorded_payment,
     sp.payment_status
 FROM employees e
-JOIN salary_payments sp ON e.employee_id = sp.employee_id;
+JOIN salary_payments sp ON e.employee_id = sp.employee_id
+LEFT JOIN (
+    SELECT 
+        employee_id, 
+        YEAR(effective_date) AS log_year,
+        MONTHNAME(effective_date) AS log_month,
+        SUM(CASE WHEN bd_type = 'Bonus' THEN amount ELSE 0 END) AS total_bonus,
+        SUM(CASE WHEN bd_type = 'Deduction' THEN amount ELSE 0 END) AS total_deduction
+    FROM bonus_deductions
+    GROUP BY employee_id, YEAR(effective_date), MONTHNAME(effective_date)
+) bd ON e.employee_id = bd.employee_id 
+    AND sp.year = bd.log_year 
+    AND sp.salary_month = bd.log_month;
 
 -- View 2: Tham gia dự án
 CREATE VIEW v_project_participation AS
