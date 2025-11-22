@@ -1,5 +1,8 @@
 DELIMITER $$
 
+-- ============================================================
+-- PROCEDURE 1: Thêm nhân viên mới
+-- ============================================================
 DROP PROCEDURE IF EXISTS sp_add_employee $$
 CREATE PROCEDURE sp_add_employee (
     IN p_full_name VARCHAR(100),
@@ -46,6 +49,9 @@ BEGIN
     SELECT LAST_INSERT_ID() AS new_employee_id;
 END $$
 
+-- ============================================================
+-- PROCEDURE 2: Cập nhật thông tin nhân viên
+-- ============================================================
 DROP PROCEDURE IF EXISTS sp_update_employee $$
 CREATE PROCEDURE sp_update_employee (
     IN p_emp_id INT,
@@ -72,12 +78,20 @@ BEGIN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error: Phone already used by another employee!';
     END IF;
 
+    -- Validate Base salary > 0
+    IF p_base_salary <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error: Base salary must be greater than 0!';
+    END IF;
+
     UPDATE employees
     SET full_name = p_full_name, phone_number = p_phone, email = p_email, 
         address = p_address, position = p_position, base_salary = p_base_salary
     WHERE employee_id = p_emp_id;
 END $$
 
+-- ============================================================
+-- PROCEDURE 3: Xóa nhân viên
+-- ============================================================
 DROP PROCEDURE IF EXISTS sp_delete_employee $$
 CREATE PROCEDURE sp_delete_employee (IN p_emp_id INT)
 BEGIN
@@ -88,13 +102,16 @@ BEGIN
     DELETE FROM employees WHERE employee_id = p_emp_id;
 END $$
 
+-- ============================================================
+-- PROCEDURE 4: Chấm công
+-- ============================================================
 DROP PROCEDURE IF EXISTS sp_mark_attendance $$
 CREATE PROCEDURE sp_mark_attendance (
     IN p_emp_id INT,
     IN p_work_date DATE,
     IN p_check_in TIME,
     IN p_check_out TIME,
-    IN p_status VARCHAR(10)
+    IN p_status ENUM('Present','Absent','On Leave')
 )
 BEGIN
     DECLARE rec_count INT;
@@ -131,6 +148,9 @@ BEGIN
     END IF;
 END $$
 
+-- ============================================================
+-- PROCEDURE 5: Thêm phòng ban mới
+-- ============================================================
 DROP PROCEDURE IF EXISTS sp_add_department $$
 CREATE PROCEDURE sp_add_department (IN p_dept_name VARCHAR(100), IN p_location VARCHAR(255))
 BEGIN
@@ -142,50 +162,92 @@ BEGIN
     SELECT LAST_INSERT_ID() AS new_dept_id;
 END $$
 
+-- ============================================================
+-- PROCEDURE 6: Cập nhật phòng ban
+-- ============================================================
 DROP PROCEDURE IF EXISTS sp_update_department $$
 CREATE PROCEDURE sp_update_department (IN p_dept_id INT, IN p_dept_name VARCHAR(100), IN p_location VARCHAR(255))
 BEGIN
+    -- Kiểm tra phòng ban tồn tại
     IF NOT EXISTS (SELECT 1 FROM departments WHERE department_id = p_dept_id) THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error: Department not found!';
+    END IF;
+    
+    -- Kiểm tra tên phòng ban trùng với phòng ban KHÁC
+    IF EXISTS (SELECT 1 FROM departments 
+               WHERE department_name = p_dept_name 
+               AND department_id != p_dept_id) THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error: Department name already exists!';
     END IF;
     
     UPDATE departments SET department_name = p_dept_name, location = p_location WHERE department_id = p_dept_id;
 END $$
 
+-- ============================================================
+-- PROCEDURE 7: Thêm dự án mới
+-- ============================================================
 DROP PROCEDURE IF EXISTS sp_add_project $$
 CREATE PROCEDURE sp_add_project (
     IN p_name VARCHAR(100), 
     IN p_start_date DATE, 
     IN p_end_date DATE, 
-    IN p_budget DECIMAL(15,2)
+    IN p_budget DECIMAL(15,2),
+    IN p_department_id INT
 )
 BEGIN
-    -- Validate End Date >= Start Date
-    IF p_end_date < p_start_date THEN
+    -- Validate Department tồn tại
+    IF NOT EXISTS (SELECT 1 FROM departments WHERE department_id = p_department_id) THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error: Department ID does not exist!';
+    END IF;
+    
+    -- Validate End Date >= Start Date (nếu có end date)
+    IF p_end_date IS NOT NULL AND p_end_date < p_start_date THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error: End date must be after or equal to Start date!';
     END IF;
     
-    INSERT INTO projects(project_name, start_date, end_date, budget) 
-    VALUES(p_name, p_start_date, p_end_date, p_budget);
+    -- Validate Budget > 0
+    IF p_budget <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error: Budget must be greater than 0!';
+    END IF;
+    
+    INSERT INTO projects(project_name, start_date, end_date, budget, department_id) 
+    VALUES(p_name, p_start_date, p_end_date, p_budget, p_department_id);
+    
     SELECT LAST_INSERT_ID() AS new_project_id;
 END $$
 
+-- ============================================================
+-- PROCEDURE 8: Cập nhật dự án
+-- ============================================================
 DROP PROCEDURE IF EXISTS sp_update_project $$
 CREATE PROCEDURE sp_update_project (
     IN p_proj_id INT, 
     IN p_name VARCHAR(100), 
-    IN p_end_date DATE, 
-    IN p_status VARCHAR(50)
+    IN p_end_date DATE
 )
 BEGIN
+    DECLARE v_start_date DATE;
+    
+    -- Kiểm tra dự án tồn tại
     IF NOT EXISTS (SELECT 1 FROM projects WHERE project_id = p_proj_id) THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error: Project not found!';
     END IF;
     
-    UPDATE projects SET project_name = p_name, end_date = p_end_date, status = p_status 
+    -- Lấy start_date của dự án
+    SELECT start_date INTO v_start_date FROM projects WHERE project_id = p_proj_id;
+    
+    -- Validate End date >= Start date (nếu có end date)
+    IF p_end_date IS NOT NULL AND p_end_date < v_start_date THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error: End date cannot be before start date!';
+    END IF;
+    
+    UPDATE projects SET project_name = p_name, end_date = p_end_date
     WHERE project_id = p_proj_id;
 END $$
 
+-- ============================================================
+-- PROCEDURE 9: Phân công nhân viên vào dự án
+-- ============================================================
 DROP PROCEDURE IF EXISTS sp_assign_project $$
 CREATE PROCEDURE sp_assign_project (
     IN p_emp_id INT, 
@@ -194,12 +256,19 @@ CREATE PROCEDURE sp_assign_project (
     IN p_hours DECIMAL(5,2)
 )
 BEGIN
+    -- Validate Employee tồn tại
     IF NOT EXISTS (SELECT 1 FROM employees WHERE employee_id = p_emp_id) THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error: Employee not found!';
     END IF;
     
+    -- Validate Project tồn tại
     IF NOT EXISTS (SELECT 1 FROM projects WHERE project_id = p_proj_id) THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error: Project not found!';
+    END IF;
+    
+    -- Validate Hours >= 0
+    IF p_hours < 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error: Hours worked cannot be negative!';
     END IF;
     
     -- Kiểm tra đã phân công chưa
@@ -209,8 +278,13 @@ BEGIN
     
     INSERT INTO assignments(employee_id, project_id, role, hours_worked, assigned_date)
     VALUES(p_emp_id, p_proj_id, p_role, p_hours, CURDATE());
+    
+    SELECT LAST_INSERT_ID() AS new_assignment_id;
 END $$
 
+-- ============================================================
+-- PROCEDURE 10: Thêm thưởng/phạt
+-- ============================================================
 DROP PROCEDURE IF EXISTS sp_add_bonus_deduction $$
 CREATE PROCEDURE sp_add_bonus_deduction (
     IN p_emp_id INT,
@@ -220,18 +294,25 @@ CREATE PROCEDURE sp_add_bonus_deduction (
     IN p_effective_date DATE
 )
 BEGIN
+    -- Validate Employee tồn tại
     IF NOT EXISTS (SELECT 1 FROM employees WHERE employee_id = p_emp_id) THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error: Employee not found!';
     END IF;
     
+    -- Validate Amount > 0
     IF p_amount <= 0 THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error: Amount must be greater than 0!';
     END IF;
     
     INSERT INTO bonus_deductions(employee_id, bd_type, amount, description, effective_date)
     VALUES(p_emp_id, p_bd_type, p_amount, p_desc, p_effective_date);
+    
+    SELECT LAST_INSERT_ID() AS new_bd_id;
 END $$
 
+-- ============================================================
+-- PROCEDURE 11: Ghi nhận thanh toán lương
+-- ============================================================
 DROP PROCEDURE IF EXISTS sp_record_salary_payment $$
 CREATE PROCEDURE sp_record_salary_payment (
     IN p_emp_id INT,
@@ -240,13 +321,39 @@ CREATE PROCEDURE sp_record_salary_payment (
     IN p_total DECIMAL(10,2)
 )
 BEGIN
-    -- Kiểm tra trùng lương tháng/năm
-    IF EXISTS (SELECT 1 FROM salary_payments WHERE employee_id = p_emp_id AND salary_month = p_month AND year = p_year) THEN
+    -- 1. Validate Employee tồn tại
+    IF NOT EXISTS (SELECT 1 FROM employees WHERE employee_id = p_emp_id) THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error: Employee not found!';
+    END IF;
+    
+    -- 2. Validate Total amount > 0
+    IF p_total <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error: Total amount must be greater than 0!';
+    END IF;
+    
+    -- 3. Validate Year hợp lý (2000 đến năm sau)
+    IF p_year < 2000 OR p_year > YEAR(CURDATE()) + 1 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error: Invalid year!';
+    END IF;
+    
+    -- 4. Validate Month name hợp lệ
+    IF p_month NOT IN ('January', 'February', 'March', 'April', 'May', 'June',
+                       'July', 'August', 'September', 'October', 'November', 'December') THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error: Invalid month name!';
+    END IF;
+    
+    -- 5. Kiểm tra trùng lương tháng/năm
+    IF EXISTS (SELECT 1 FROM salary_payments 
+               WHERE employee_id = p_emp_id 
+               AND salary_month = p_month 
+               AND year = p_year) THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error: Salary for this month/year already recorded!';
     END IF;
     
     INSERT INTO salary_payments(employee_id, salary_month, year, total_amount, payment_date, payment_status)
     VALUES(p_emp_id, p_month, p_year, p_total, CURDATE(), 'Paid');
+    
+    SELECT LAST_INSERT_ID() AS new_payment_id;
 END $$
 
 DELIMITER ;
