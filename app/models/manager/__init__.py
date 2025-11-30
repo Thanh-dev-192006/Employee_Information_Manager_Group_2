@@ -1,10 +1,20 @@
+from .employee import EmployeeManager
+from .department import DepartmentManager
+from .project import ProjectManager
+from .assignment import AssignmentManager
+from .attendance import AttendanceManager
+from .salary import SalaryManager
+from .bonus_deduction import BonusDeductionManager
+from .query import QueryManager
 
-from .employee_manager import EmployeeManager
-from .department_manager import DepartmentManager
-from .project_manager import ProjectManager
-from .assignment_manager import AssignmentManager
-from .attendance_manager import AttendanceManager
-from .salary_manager import SalaryManager
-from .bonus_deduction_manager import BonusDeductionManager
-from .query_manager import QueryManager
 
+__all__ = [
+    'EmployeeManager',
+    'DepartmentManager',
+    'ProjectManager',
+    'AssignmentManager',
+    'AttendanceManager',
+    'SalaryManager',
+    'BonusDeductionManager',
+    'QueryManager'
+]
