@@ -1,9 +1,9 @@
 import mysql.connector
 from typing import List, Dict
 
-from .database import DatabaseConnection
-from .helpers import parse_stored_procedure_error
-from .exceptions import *
+from ..config.database import DatabaseConnection
+from ..utils.helpers import parse_stored_procedure_error
+from ..utils.exceptions import *
 
 class DepartmentManager:
     """Quản lý department với CRUD operations"""

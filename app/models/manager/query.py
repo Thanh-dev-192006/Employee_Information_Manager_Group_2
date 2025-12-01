@@ -3,9 +3,9 @@ import mysql.connector
 from decimal import Decimal
 import csv
 
-from .database import DatabaseConnection
-from .helpers import parse_stored_procedure_error
-from .exceptions import *
+from ..config.database import DatabaseConnection
+from ..utils.helpers import parse_stored_procedure_error
+from ..utils.exceptions import *
 
 class QueryManager:
     """Manages complex queries and exports"""
