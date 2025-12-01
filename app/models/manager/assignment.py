@@ -1,9 +1,9 @@
 from typing import List, Dict
 import mysql.connector
 
-from .database import DatabaseConnection
-from .helpers import parse_stored_procedure_error
-from .exceptions import *
+from ..config.database import DatabaseConnection
+from ..utils.helpers import parse_stored_procedure_error
+from ..utils.exceptions import *
 
 class AssignmentManager:
     """Quản lý phân công dự án"""
