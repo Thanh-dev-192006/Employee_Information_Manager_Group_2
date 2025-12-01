@@ -24,7 +24,7 @@ class QueryManager:
                     e.employee_id,
                     e.full_name,
                     e.position,
-                    e.base_salary,
+                    a.salary as assignment_salary,
                     p.project_name,
                     a.role as project_role,
                     a.hours_worked,
@@ -60,7 +60,7 @@ class QueryManager:
                     e.employee_id,
                     e.full_name,
                     e.position,
-                    e.base_salary,
+                    a.salary as assignment_salary,
                     d.department_name,
                     p.project_name,
                     a.role as project_role,
@@ -138,14 +138,17 @@ class QueryManager:
                     e.employee_id,
                     e.full_name,
                     e.position,
-                    e.base_salary,
                     d.department_name,
-                    (SELECT AVG(base_salary) FROM employees) as avg_salary,
-                    (e.base_salary - (SELECT AVG(base_salary) FROM employees)) as difference
+                    COUNT(a.assignment_id) as total_assignments,
+                    AVG(a.salary) as avg_assignment_salary,
+                    (SELECT AVG(salary) FROM assignments) as overall_avg_salary,
+                    (AVG(a.salary) - (SELECT AVG(salary) FROM assignments)) as difference
                 FROM employees e
                 JOIN departments d ON e.department_id = d.department_id
-                WHERE e.base_salary > (SELECT AVG(base_salary) FROM employees)
-                ORDER BY e.base_salary DESC
+                JOIN assignments a ON e.employee_id = a.employee_id
+                GROUP BY e.employee_id, e.full_name, e.position, d.department_name
+                HAVING AVG(a.salary) > (SELECT AVG(salary) FROM assignments)
+                ORDER BY avg_assignment_salary DESC
             """
             cursor.execute(query)
             return cursor.fetchall()
