@@ -11,15 +11,15 @@ class ProjectScreen(ttk.Frame):
         super().__init__(master, padding=10)
         self.managers = managers
         self.proj_mgr = managers["project"]
-        self.assign_mgr = managers["assignment"]
 
         top = ttk.Frame(self)
         top.pack(fill="x")
+
         ttk.Label(top, text="DỰ ÁN", font=("Segoe UI", 14, "bold")).pack(side="left")
 
         self.status = tk.StringVar(value="all")
-        ttk.Label(top, text="Filter:").pack(side="left", padx=(16,4))
-        ttk.Combobox(top, textvariable=self.status, values=["all","ongoing","completed"], state="readonly", width=12)\
+        ttk.Label(top, text="Filter:").pack(side="left", padx=(16, 4))
+        ttk.Combobox(top, textvariable=self.status, values=["all", "ongoing", "completed"], state="readonly", width=12)\
             .pack(side="left")
         ttk.Button(top, text="Apply", command=self.refresh).pack(side="left", padx=6)
 
@@ -28,14 +28,15 @@ class ProjectScreen(ttk.Frame):
         ttk.Button(top, text="Sửa", command=self.on_edit).pack(side="right", padx=6)
         ttk.Button(top, text="Thêm", command=self.on_add).pack(side="right")
 
-        cols = ("project_id","project_name","start_date","end_date","budget_vnd","status","department_name","total_employees","total_hours_worked")
+        cols = ("project_id", "project_name", "start_date", "end_date", "budget_vnd",
+                "status", "department_name", "total_employees", "total_hours_worked")
         self.tree = SortableTreeview(self, columns=cols, show="headings", height=16)
-        self.tree.pack(fill="both", expand=True, pady=(10,0))
+        self.tree.pack(fill="both", expand=True, pady=(10, 0))
 
         heads = {
-            "project_id":"ID","project_name":"Tên dự án","start_date":"Bắt đầu","end_date":"Kết thúc",
-            "budget_vnd":"Ngân sách","status":"Trạng thái","department_name":"Phòng ban",
-            "total_employees":"Số NV","total_hours_worked":"Giờ"
+            "project_id": "ID", "project_name": "Tên dự án", "start_date": "Bắt đầu", "end_date": "Kết thúc",
+            "budget_vnd": "Ngân sách", "status": "Trạng thái", "department_name": "Phòng ban",
+            "total_employees": "Số NV", "total_hours_worked": "Giờ"
         }
         for c in cols:
             self.tree.heading(c, text=heads[c])
@@ -50,8 +51,7 @@ class ProjectScreen(ttk.Frame):
         sel = self.tree.selection()
         if not sel:
             return None
-        vals = self.tree.item(sel[0], "values")
-        return int(vals[0])
+        return int(self.tree.item(sel[0], "values")[0])
 
     def refresh(self):
         try:
@@ -59,7 +59,7 @@ class ProjectScreen(ttk.Frame):
                 self.tree.delete(i)
 
             s = self.status.get()
-            status = None if s=="all" else s
+            status = None if s == "all" else s
             rows = self.proj_mgr.get_all_projects(status=status)
 
             for r in rows:
@@ -92,7 +92,10 @@ class ProjectScreen(ttk.Frame):
             messagebox.showwarning("Thiếu", "Chọn 1 dự án để sửa")
             return
         try:
-            proj = next(p for p in self.proj_mgr.get_all_projects(None) if int(p["project_id"]) == pid)
+            proj = next((p for p in self.proj_mgr.get_all_projects(None) if int(p["project_id"]) == pid), None)
+            if not proj:
+                messagebox.showerror("Lỗi", "Không tìm thấy dự án")
+                return
             dlg = ProjectDialog(self, self.managers, mode="edit", project=proj)
             self.wait_window(dlg)
             self.refresh()

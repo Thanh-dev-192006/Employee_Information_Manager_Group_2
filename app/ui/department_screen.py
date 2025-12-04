@@ -60,17 +60,16 @@ class DepartmentScreen(ttk.Frame):
         try:
             for i in self.dept_tree.get_children():
                 self.dept_tree.delete(i)
-            rows = self.dept_mgr.get_all_departments()
-            for r in rows:
+            depts = self.dept_mgr.get_all_departments()
+            for d in depts:
                 self.dept_tree.insert("", "end", values=(
-                    r.get("department_id"),
-                    r.get("department_name"),
-                    r.get("location"),
-                    r.get("employee_count", 0)
+                    d.get("department_id"),
+                    d.get("department_name"),
+                    d.get("location"),
+                    d.get("employee_count") or 0
                 ))
-            self.show_employees()
         except Exception as e:
-            messagebox.showerror("Lỗi", f"Không tải phòng ban: {e}")
+            messagebox.showerror("Lỗi", str(e))
 
     def _selected_dept_id(self):
         sel = self.dept_tree.selection()
@@ -87,7 +86,7 @@ class DepartmentScreen(ttk.Frame):
             return
         try:
             # backend không có get_employees_by_department => lấy nhiều rồi filter (dataset nhóm thường nhỏ)
-            emps = self.emp_mgr.get_all_employees(limit=1000, offset=0)
+            emps = self.emp_mgr.get_all_employees(limit=None, offset=0)
             emps = [e for e in emps if int(e.get("department_id")) == dept_id]
             for e in emps:
                 self.emp_tree.insert("", "end", values=(
@@ -111,7 +110,10 @@ class DepartmentScreen(ttk.Frame):
             return
         try:
             # dept_mgr không có get_by_id => lấy list rồi tìm
-            dept = next(d for d in self.dept_mgr.get_all_departments() if int(d["department_id"]) == dept_id)
+            dept = next((d for d in self.dept_mgr.get_all_departments() if int(d["department_id"]) == dept_id), None)
+            if not dept:
+                messagebox.showerror("Lỗi", "Không tìm thấy phòng ban")
+                return
             dlg = DepartmentDialog(self, self.dept_mgr, mode="edit", dept=dept)
             self.wait_window(dlg)
             self.refresh()

@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from datetime import date
 
-from app.models.utils.helpers import parse_display_date, parse_display_time
+from app.models.utils.helpers import parse_display_date, parse_display_time, format_display_date
 
 class AttendanceDialog(tk.Toplevel):
     def __init__(self, master, att_mgr, employee_id: int):
@@ -13,7 +13,7 @@ class AttendanceDialog(tk.Toplevel):
         self.att_mgr = att_mgr
         self.employee_id = employee_id
 
-        self.work_date = tk.StringVar()
+        self.work_date = tk.StringVar(value=format_display_date(date.today()))
         self.check_in = tk.StringVar()
         self.check_out = tk.StringVar()
         self.status = tk.StringVar(value="Present")
@@ -35,10 +35,11 @@ class AttendanceDialog(tk.Toplevel):
             .grid(row=3, column=1, sticky="ew", pady=4)
 
         btns = ttk.Frame(body)
-        btns.grid(row=4, column=0, columnspan=2, sticky="e", pady=(10,0))
+        btns.grid(row=4, column=0, columnspan=2, sticky="e", pady=(10, 0))
         ttk.Button(btns, text="Hủy", command=self.destroy).pack(side="right", padx=6)
         ttk.Button(btns, text="Lưu", command=self.on_save).pack(side="right")
 
+        body.columnconfigure(1, weight=1)
         self.grab_set()
         self.transient(master)
 

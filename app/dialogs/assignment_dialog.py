@@ -11,7 +11,7 @@ class AssignmentDialog(tk.Toplevel):
         self.emp_mgr = managers["employee"]
         self.project_id = project_id
 
-        self.emps = self.emp_mgr.get_all_employees(limit=1000, offset=0)
+        self.emps = self.emp_mgr.get_all_employees(limit=None, offset=0)
         self.emp_map = {f'{e["employee_id"]} - {e["full_name"]}': e["employee_id"] for e in self.emps}
 
         self.emp = tk.StringVar(value=(next(iter(self.emp_map.keys())) if self.emp_map else ""))
@@ -32,10 +32,11 @@ class AssignmentDialog(tk.Toplevel):
         ttk.Entry(body, textvariable=self.hours).grid(row=2, column=1, sticky="ew", pady=4)
 
         btns = ttk.Frame(body)
-        btns.grid(row=3, column=0, columnspan=2, sticky="e", pady=(10,0))
+        btns.grid(row=3, column=0, columnspan=2, sticky="e", pady=(10, 0))
         ttk.Button(btns, text="Hủy", command=self.destroy).pack(side="right", padx=6)
         ttk.Button(btns, text="Lưu", command=self.on_save).pack(side="right")
 
+        body.columnconfigure(1, weight=1)
         self.grab_set()
         self.transient(master)
 
@@ -44,12 +45,18 @@ class AssignmentDialog(tk.Toplevel):
             emp_id = self.emp_map.get(self.emp.get())
             if not emp_id:
                 raise ValueError("Nhân viên không hợp lệ")
+
             role = self.role.get().strip()
             if not role:
                 raise ValueError("Vai trò không được trống")
-            hours = float(self.hours.get().strip())
-            if hours < 0:
-                raise ValueError("Giờ làm phải >= 0")
+
+            try:
+                hours = float(self.hours.get().strip())
+            except ValueError:
+                raise ValueError("Giờ làm phải là số")
+
+            if hours < 0 or hours > 24:
+                raise ValueError("Giờ làm phải từ 0-24")
 
             res = self.assign_mgr.create_assignment(emp_id, self.project_id, role, hours)
             messagebox.showinfo("OK", res.get("message","Phân công OK"))
