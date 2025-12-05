@@ -105,23 +105,23 @@ class Dashboard(ttk.Frame):
         return data
 
     def refresh_dashboard(self):
-        if self.canvas: 
-            self.canvas.get_tk_widget().destroy()
-        if self.fig: 
-            plt.close(self.fig)
-
+        # 1. Lấy dữ liệu mới nhất
         data = self.fetch_data()
 
-        # Tạo Figure
-        self.fig = Figure(figsize=(14, 8), dpi=100, facecolor=self.COLORS['bg_main'])
-        
-        # --- VẼ GIAO DIỆN ---
+        # 2. Kiểm tra nếu biểu đồ chưa từng được tạo (Lần đầu tiên chạy)
+        if self.fig is None:
+            self.fig = Figure(figsize=(11, 6), dpi=100, facecolor=self.COLORS['bg_main'])
+            self.canvas = FigureCanvasTkAgg(self.fig, master=self.chart_frame)
+            self.canvas.get_tk_widget().pack(fill="both", expand=True)
+        else:
+            self.fig.clear()
+
+        # 3. Vẽ lại nội dung lên khung có sẵn
         self._draw_kpi_sidebar(self.fig, data)
         self._draw_charts(self.fig, data)
 
-        self.canvas = FigureCanvasTkAgg(self.fig, master=self.chart_frame)
+        # 4. Cập nhật hiển thị
         self.canvas.draw()
-        self.canvas.get_tk_widget().pack(fill="both", expand=True)
 
     def _draw_kpi_sidebar(self, fig, data):
         """Vẽ thanh KPI bên trái"""
@@ -166,10 +166,10 @@ class Dashboard(ttk.Frame):
         """Vẽ 4 biểu đồ lưới 2x2"""
         # Layout: [x, y, width, height]
         grid = [
-            ([0.26, 0.55, 0.35, 0.38], "Employees by Department"), # Top Left
-            ([0.64, 0.55, 0.35, 0.38], "Project Roles"),           # Top Right
-            ([0.26, 0.08, 0.35, 0.38], "Salary Distribution"),     # Bot Left
-            ([0.64, 0.08, 0.35, 0.38], "Top Earners")              # Bot Right
+            ([0.38, 0.53, 0.24, 0.35], "Employees by Department"), 
+            ([0.70, 0.53, 0.25, 0.35], "Project Roles"),           
+            ([0.38, 0.08, 0.24, 0.35], "Salary Distribution"), 
+            ([0.73, 0.08, 0.22, 0.35], "Top Earners")            
         ]
 
         # 1. Employees by Dept
@@ -178,7 +178,7 @@ class Dashboard(ttk.Frame):
         d = data['employees_by_dept']
         if d:
             items = sorted(d.items(), key=lambda x: x[1], reverse=True)[:6]
-            names, vals = [x[0][:12] for x in items], [x[1] for x in items]
+            names, vals = [x[0] for x in items], [x[1] for x in items]
             y = np.arange(len(names))
             ax1.barh(y, vals, color=self.COLORS['secondary'], height=0.6)
             ax1.set_yticks(y); ax1.set_yticklabels(names); ax1.invert_yaxis()
@@ -194,7 +194,7 @@ class Dashboard(ttk.Frame):
             items = sorted(d.items(), key=lambda x: x[1], reverse=True)[:5]
             names, vals = [x[0] for x in items], [x[1] for x in items]
             ax2.pie(vals, labels=names, autopct='%1.0f%%', colors=self.COLORS['chart_colors'], 
-                    startangle=90, wedgeprops=dict(width=0.4, edgecolor='white'))
+                    startangle=90, pctdistance=0.8, wedgeprops=dict(width=0.4, edgecolor='white'))
             ax2.text(0, 0, f"{sum(vals)}\nRoles", ha='center', va='center', fontweight='bold')
         else: self._no_data(ax2)
 
@@ -212,7 +212,7 @@ class Dashboard(ttk.Frame):
         self._style_ax(ax4, grid[3][1])
         d = data['top_employees']
         if d:
-            names = [x[0][:12] for x in d]
+            names = [x[0] for x in d]
             vals = [x[1] * 10000 / 1000000 for x in d]
             y = np.arange(len(names))
             ax4.barh(y, vals, color=self.COLORS['chart_colors'][0], height=0.6)

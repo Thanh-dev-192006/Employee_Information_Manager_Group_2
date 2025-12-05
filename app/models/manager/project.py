@@ -118,7 +118,7 @@ class ProjectManager:
             elif status == 'completed':
                 query += " WHERE p.end_date < CURDATE()"
             
-            query += " ORDER BY p.start_date DESC"
+            query += " ORDER BY p.start_date ASC"
             
             cursor.execute(query)
             return cursor.fetchall()

@@ -177,3 +177,18 @@ class EmployeeManager:
                 cursor.close()
             if conn:
                 conn.close()
+    @staticmethod
+    def count_employees() -> int:
+        """Đếm tổng số nhân viên hiện có"""
+        conn = None
+        cursor = None
+        try:
+            conn = DatabaseConnection.get_connection()
+            cursor = conn.cursor()
+            cursor.execute("SELECT COUNT(*) FROM employees")
+            return cursor.fetchone()[0]
+        except mysql.connector.Error:
+            return 0
+        finally:
+            if cursor: cursor.close()
+            if conn: conn.close()

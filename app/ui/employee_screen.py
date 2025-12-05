@@ -6,10 +6,13 @@ from app.dialogs.employee_dialog import EmployeeDialog
 from app.models.utils.helpers import to_vnd, format_currency_vnd
 
 class EmployeeScreen(ttk.Frame):
-    PAGE_SIZE = 20
+    PAGE_SIZE = 15
 
     def __init__(self, master, managers: dict):
         super().__init__(master, padding=10)
+        style = ttk.Style()
+        style.configure("BigRow.Treeview", font=("Segoe UI", 12), rowheight=50)
+        style.configure("BigRow.Treeview.Heading", font=("Segoe UI", 13, "bold"))
         self.managers = managers
         self.emp_mgr = managers["employee"]
 
@@ -36,7 +39,7 @@ class EmployeeScreen(ttk.Frame):
         ttk.Button(actions, text="Delete", command=self.on_delete).pack(side="right")
 
         cols = ("employee_id","full_name","gender","phone_number","email","department_name","position","base_salary_vnd")
-        self.tree = SortableTreeview(self, columns=cols, show="headings", height=18)
+        self.tree = SortableTreeview(self, columns=cols, show="headings", height=15, style="BigRow.Treeview")
         self.tree.pack(fill="both", expand=True)
 
         headings = {
@@ -72,13 +75,24 @@ class EmployeeScreen(ttk.Frame):
         try:
             for i in self.tree.get_children():
                 self.tree.delete(i)
-
+            total_records = 0
+            
             if self.search_mode and self.search_keyword.strip():
                 rows = self.emp_mgr.search_employees(self.search_keyword.strip())
                 self.pager.set_page(0)
+                self.pager.update_state(can_prev=False, can_next=False)
+                
             else:
                 rows = self.emp_mgr.get_all_employees(limit=self.PAGE_SIZE, offset=self.page*self.PAGE_SIZE)
                 self.pager.set_page(self.page)
+                total_records = self.emp_mgr.count_employees()
+                import math
+                max_page = math.ceil(total_records / self.PAGE_SIZE) - 1
+                if max_page < 0: max_page = 0
+                can_prev = (self.page > 0)
+                can_next = (self.page < max_page)
+                
+                self.pager.update_state(can_prev, can_next)
 
             for r in rows:
                 salary_vnd = format_currency_vnd(to_vnd(r.get("base_salary")))

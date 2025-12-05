@@ -71,5 +71,9 @@ class PaginationBar(ttk.Frame):
         self.lbl.pack(side="left", padx=10)
         self.btn_next.pack(side="left")
 
+    def update_state(self, can_prev: bool, can_next: bool):
+        self.btn_prev.configure(state="normal" if can_prev else "disabled")
+        self.btn_next.configure(state="normal" if can_next else "disabled")
+
     def set_page(self, page_idx: int):
         self.lbl.config(text=f"Page {page_idx + 1}")

@@ -58,6 +58,7 @@ class App(ttk.Window):
         def add(label, key):
             menubar.add_command(label=label, command=lambda: self.show(key))
 
+        add("Dashboard", "dashboard")
         add("Nhân viên", "employee")
         add("Phòng ban", "department")
         add("Dự án", "project")
