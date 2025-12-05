@@ -9,6 +9,7 @@ from app.models.manager.attendance import AttendanceManager
 from app.models.manager.salary import SalaryManager
 from app.models.manager.bonus_deduction import BonusDeductionManager
 from app.models.manager.query import QueryManager
+ 
 
 from app.ui.employee_screen import EmployeeScreen
 from app.ui.department_screen import DepartmentScreen
@@ -16,6 +17,7 @@ from app.ui.project_screen import ProjectScreen
 from app.ui.attendance_screen import AttendanceScreen
 from app.ui.salary_screen import SalaryScreen
 from app.ui.queries_screen import QueriesScreen
+from app.ui.dashboard import Dashboard 
 
 class App(tk.Tk):
     def __init__(self):
@@ -65,10 +67,10 @@ class App(tk.Tk):
         add("Queries", "queries")
 
     def _init_screens(self):
-        # Dashboard khung trống
-        dash = ttk.Frame(self.container, padding=20)
-        ttk.Label(dash, text="DASHBOARD (khung trống)", font=("Segoe UI", 16, "bold")).pack(anchor="w")
-        self.screens["dashboard"] = dash
+        
+        
+        self.screens["dashboard"] = Dashboard(self.container, self.managers) 
+
 
         self.screens["employee"] = EmployeeScreen(self.container, self.managers)
         self.screens["department"] = DepartmentScreen(self.container, self.managers)
@@ -81,7 +83,12 @@ class App(tk.Tk):
             f.place(relx=0, rely=0, relwidth=1, relheight=1)
 
     def show(self, key: str):
-        self.screens[key].tkraise()
+        screen = self.screens.get(key)
+        if screen:
+            screen.tkraise()
+            # Nếu là dashboard thì gọi refresh để cập nhật số liệu mới nhất
+            if key == "dashboard" and hasattr(screen, "refresh_dashboard"):
+                screen.refresh_dashboard()
 
 if __name__ == "__main__":
     App().mainloop()
