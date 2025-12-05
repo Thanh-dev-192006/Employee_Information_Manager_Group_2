@@ -1,4 +1,4 @@
-from datetime import datetime, date, time
+from datetime import datetime, date, time, timedelta
 from decimal import Decimal
 from .exceptions import ValidationError, NotFoundError, DatabaseError
 import re
@@ -93,13 +93,27 @@ def parse_display_time(s: str) -> time:
     
     # unreachable
 
-def format_display_time(t: time) -> str:
+def format_display_time(t) -> str:
     """Format time -> HH:MM hoặc HH:MM:SS. Trả về '' nếu None."""
     if t is None:
         return ""
-    if t.second > 0:
-        return t.strftime("%H:%M:%S")
-    return t.strftime("%H:%M")
+    
+    if isinstance(t, timedelta):
+        total_seconds = int(t.total_seconds())
+        hours = total_seconds // 3600
+        minutes = (total_seconds % 3600) // 60
+        seconds = total_seconds % 60
+        
+        if seconds > 0:
+            return f"{hours:02}:{minutes:02}:{seconds:02}"
+        return f"{hours:02}:{minutes:02}"
+
+    if hasattr(t, 'second'):
+        if t.second > 0:
+            return t.strftime("%H:%M:%S")
+        return t.strftime("%H:%M")
+    
+    return str(t)
 
 
 def parse_currency_input(value: str) -> float:

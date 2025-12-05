@@ -86,7 +86,7 @@ class DepartmentScreen(ttk.Frame):
             return
         try:
             # backend không có get_employees_by_department => lấy nhiều rồi filter (dataset nhóm thường nhỏ)
-            emps = self.emp_mgr.get_all_employees(limit=None, offset=0)
+            emps = self.emp_mgr.get_all_employees(limit=10000, offset=0)
             emps = [e for e in emps if int(e.get("department_id")) == dept_id]
             for e in emps:
                 self.emp_tree.insert("", "end", values=(

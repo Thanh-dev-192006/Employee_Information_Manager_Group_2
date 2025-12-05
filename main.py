@@ -1,6 +1,9 @@
 import tkinter as tk
 from tkinter import ttk
 
+import ttkbootstrap as ttk
+from ttkbootstrap.constants import *
+
 from app.models.manager.employee import EmployeeManager
 from app.models.manager.department import DepartmentManager
 from app.models.manager.project import ProjectManager
@@ -19,17 +22,13 @@ from app.ui.salary_screen import SalaryScreen
 from app.ui.queries_screen import QueriesScreen
 from app.ui.dashboard import Dashboard 
 
-class App(tk.Tk):
+class App(ttk.Window):
     def __init__(self):
-        super().__init__()
-        self.title("Employee Information Manager - 161Corp")
-        self.geometry("1200x720")
+        # Chọn theme ở đây (bạn có thể thử: "litera", "cosmo", "flatly", "journal")
+        super().__init__(themename="litera")
 
-        style = ttk.Style(self)
-        try:
-            style.theme_use("clam")
-        except Exception:
-            pass
+        self.title("Employee Information Manager - 161Corp")
+        self.geometry("1280x800")
 
         # 7 managers (đúng yêu cầu đề)
         self.managers = {

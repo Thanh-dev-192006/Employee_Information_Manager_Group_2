@@ -12,7 +12,7 @@ class BonusDeductionDialog(tk.Toplevel):
         self.emp_mgr = managers["employee"]
         self.bd_mgr = managers["bonus_deduction"]
 
-        self.emps = self.emp_mgr.get_all_employees(limit=None, offset=0)
+        self.emps = self.emp_mgr.get_all_employees(limit=10000, offset=0)
         self.emp_map = {f'{e["employee_id"]} - {e["full_name"]}': e["employee_id"] for e in self.emps}
 
         self.emp = tk.StringVar(value=(next(iter(self.emp_map.keys())) if self.emp_map else ""))

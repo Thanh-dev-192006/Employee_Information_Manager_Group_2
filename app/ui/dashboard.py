@@ -1,29 +1,30 @@
 import tkinter as tk
 from tkinter import ttk
-from datetime import datetime, date
-from collections import Counter
+import os
 
+# Import Matplotlib
 import matplotlib.pyplot as plt
+import matplotlib.font_manager as fm
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.patches import FancyBboxPatch
 from matplotlib.figure import Figure
 import numpy as np
+from collections import Counter
 
 class Dashboard(ttk.Frame):
-    """Dashboard with KPIs on Left Sidebar and Charts in Grid"""
+    """Dashboard with KPIs and Charts (Simplified Rendering)"""
 
-    # Color Palette - Ocean Blue + White Theme
+    # Bộ màu sắc
     COLORS = {
-        'bg_main': '#f0f4f8',       # Màu nền tổng thể (xám xanh rất nhạt)
-        'card_bg': '#ffffff',       # Màu nền card (trắng)
-        'primary': '#1565C0',       # Xanh biển đậm (Header/Title)
-        'secondary': '#42A5F5',     # Xanh biển sáng (Biểu đồ)
-        'accent': '#90CAF9',        # Xanh nhạt (Điểm nhấn)
-        'text_dark': '#1e293b',     # Chữ đen
-        'text_light': '#64748b',    # Chữ xám
-        'success': '#10b981',
-        'warning': '#f59e0b',
-        'danger': '#ef4444',
+        'bg_main': '#F3F4F6',       # Nền tổng thể
+        'card_bg': '#FFFFFF',       # Nền trắng cho biểu đồ
+        'primary': '#2563EB',       # Xanh đậm
+        'secondary': '#3B82F6',     # Xanh nhạt
+        'accent': '#8B5CF6',        # Tím
+        'text_dark': '#111827',     # Chữ đen
+        'text_light': '#6B7280',    # Chữ xám
+        'danger': '#EF4444',        # Đỏ
+        'chart_colors': ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6']
     }
 
     def __init__(self, parent, managers: dict):
@@ -40,357 +41,204 @@ class Dashboard(ttk.Frame):
         self._build_ui()
 
     def _build_ui(self):
-        """Build main UI structure"""
-        # Top bar with refresh button
+        # Header
         top_bar = ttk.Frame(self)
-        top_bar.pack(fill="x", padx=15, pady=(10, 5))
+        top_bar.pack(fill="x", padx=20, pady=10)
+        ttk.Label(top_bar, text="DASHBOARD OVERVIEW", font=("Segoe UI", 16, "bold"), 
+                  bootstyle="primary").pack(side="left")
+        ttk.Button(top_bar, text="↻ Refresh Data", command=self.refresh_dashboard, 
+                   bootstyle="outline-primary").pack(side="right")
 
-        ttk.Label(top_bar, text="DASHBOARD OVERVIEW", font=("Segoe UI", 16, "bold"), foreground=self.COLORS['primary']).pack(side="left")
-
-        refresh_btn = ttk.Button(top_bar, text="↻ Refresh Data", command=self.refresh_dashboard)
-        refresh_btn.pack(side="right")
-
-        # Container for matplotlib figure
+        # Chart Container
         self.chart_frame = ttk.Frame(self)
         self.chart_frame.pack(fill="both", expand=True, padx=10, pady=10)
 
-        # Initial render
+        # Load data first time
         self.refresh_dashboard()
 
-    def fetch_data_from_db(self) -> dict:
-        """Fetch all data needed for dashboard from database"""
+    def fetch_data(self) -> dict:
+        """Lấy dữ liệu từ DB (An toàn)"""
         data = {
-            'total_employees': 0,
-            'total_departments': 0,
-            'total_projects': 0,
-            'active_assignments': 0,
-            'avg_salary': 0,
-            'employees_by_dept': {},
-            'salary_list': [],
-            'top_employees': [],
-            'role_distribution': {},
-            'active_projects': 0,
+            'total_employees': 0, 'total_departments': 0, 'total_projects': 0,
+            'active_assignments': 0, 'avg_salary': 0, 
+            'employees_by_dept': {}, 'salary_list': [], 'top_employees': [], 'role_distribution': {}
         }
-
         try:
-            # Get employees
-            employees = self.emp_mgr.get_all_employees(limit=1000, offset=0) if self.emp_mgr else []
-            data['total_employees'] = len(employees)
-
-            # Calculate salary stats
-            salaries = [float(e.get('base_salary', 0)) for e in employees if e.get('base_salary')]
-            data['salary_list'] = salaries
-            data['avg_salary'] = sum(salaries) / len(salaries) if salaries else 0
-
-            # Employees by department
-            dept_counts = Counter(e.get('department_name', 'Unknown') for e in employees)
-            data['employees_by_dept'] = dict(dept_counts)
-
-            # Top employees by salary
-            emp_with_salary = [(e.get('full_name', 'N/A'), float(e.get('base_salary', 0))) 
-                               for e in employees if e.get('base_salary')]
-            emp_with_salary.sort(key=lambda x: x[1], reverse=True)
-            data['top_employees'] = emp_with_salary[:8] # Top 8
-
-            # Get departments
-            departments = self.dept_mgr.get_all_departments() if self.dept_mgr else []
-            data['total_departments'] = len(departments)
-
-            # Get projects
-            projects = self.proj_mgr.get_all_projects() if self.proj_mgr else []
-            data['total_projects'] = len(projects)
-
-            # Count active projects
-            today = date.today()
-            active = sum(1 for p in projects 
-                        if p.get('end_date') is None or p.get('end_date') >= today)
-            data['active_projects'] = active
-
-            # Count active assignments and role distribution
-            total_assignments = 0
-            role_counts = Counter()
+            # 1. Employees & Salary
+            emps = self.emp_mgr.get_all_employees(limit=2000, offset=0) if self.emp_mgr else []
+            data['total_employees'] = len(emps)
             
-            for p in projects:
-                try:
-                    assignments = self.assign_mgr.get_assignments_by_project(p['project_id']) if self.assign_mgr else []
-                    total_assignments += len(assignments)
-                    for a in assignments:
-                        role = a.get('role', 'Unknown')
-                        role_counts[role] += 1
-                except:
-                    pass
+            salaries = [float(e.get('base_salary', 0)) for e in emps if e.get('base_salary')]
+            if salaries:
+                data['salary_list'] = salaries
+                data['avg_salary'] = sum(salaries) / len(salaries)
+                
+            # Top Employees
+            emp_sal = [(e.get('full_name','N/A'), float(e.get('base_salary',0))) for e in emps]
+            emp_sal.sort(key=lambda x: x[1], reverse=True)
+            data['top_employees'] = emp_sal[:8]
 
-            data['active_assignments'] = total_assignments
-            data['role_distribution'] = dict(role_counts)
+            # Depts
+            dept_counts = Counter(e.get('department_name', 'Unknown') for e in emps)
+            data['employees_by_dept'] = dict(dept_counts)
+            
+            depts = self.dept_mgr.get_all_departments() if self.dept_mgr else []
+            data['total_departments'] = len(depts)
+
+            # Projects & Roles
+            projs = self.proj_mgr.get_all_projects() if self.proj_mgr else []
+            data['total_projects'] = len(projs)
+            
+            total_assign = 0
+            roles = Counter()
+            for p in projs:
+                try:
+                    assigns = self.assign_mgr.get_assignments_by_project(p['project_id'])
+                    total_assign += len(assigns)
+                    for a in assigns: roles[a.get('role','Unknown')] += 1
+                except: pass
+            data['active_assignments'] = total_assign
+            data['role_distribution'] = dict(roles)
 
         except Exception as e:
-            print(f"Error fetching dashboard data: {e}")
-
+            print(f"Data Fetch Error: {e}")
         return data
 
     def refresh_dashboard(self):
-        """Refresh dashboard with new data"""
-        if self.canvas:
+        if self.canvas: 
             self.canvas.get_tk_widget().destroy()
-        if self.fig:
+        if self.fig: 
             plt.close(self.fig)
 
-        data = self.fetch_data_from_db()
+        data = self.fetch_data()
 
-        # Create new figure with specific background color
-        self.fig = Figure(figsize=(14, 9), dpi=100, facecolor=self.COLORS['bg_main'])
-        self._draw_dashboard(data)
+        # Tạo Figure
+        self.fig = Figure(figsize=(14, 8), dpi=100, facecolor=self.COLORS['bg_main'])
+        
+        # --- VẼ GIAO DIỆN ---
+        self._draw_kpi_sidebar(self.fig, data)
+        self._draw_charts(self.fig, data)
 
         self.canvas = FigureCanvasTkAgg(self.fig, master=self.chart_frame)
         self.canvas.draw()
         self.canvas.get_tk_widget().pack(fill="both", expand=True)
 
-    def _draw_dashboard(self, data: dict):
-        """Draw layout: Left Sidebar (KPIs) + 4 Main Charts"""
-        fig = self.fig
+    def _draw_kpi_sidebar(self, fig, data):
+        """Vẽ thanh KPI bên trái"""
+        # Cấu hình Font Icon
+        font_path = os.path.join(os.environ.get('WINDIR', 'C:/Windows'), 'Fonts', 'seguiemj.ttf')
+        prop = fm.FontProperties(fname=font_path, size=24) if os.path.exists(font_path) else fm.FontProperties(size=20)
 
-        # --- LAYOUT CONFIGURATION ---
-        # Left Sidebar for KPIs: x=0.02 to 0.22
-        kpi_x, kpi_w = 0.02, 0.20
-        
-        # Main Area for Charts: x=0.24 to 0.98
-        # Grid 2x2
-        c_x, c_y = 0.24, 0.05
-        c_w, c_h = 0.74, 0.90
-        
-        col_gap = 0.02
-        row_gap = 0.04
-        
-        chart_w = (c_w - col_gap) / 2
-        chart_h = (c_h - row_gap) / 2
-
-        # --- 1. DRAW KPI SIDEBAR (Left) ---
-        self._draw_kpi_sidebar(fig, data, kpi_x, 0.05, kpi_w, 0.90)
-
-        # --- 2. DRAW CHARTS (2x2 Grid) ---
-        
-        # Top-Left: Employees by Department
-        ax1 = fig.add_axes([c_x, c_y + chart_h + row_gap, chart_w, chart_h])
-        self._draw_card_background(fig, ax1)
-        self._draw_employees_by_dept(ax1, data)
-
-        # Top-Right: Role Distribution
-        ax2 = fig.add_axes([c_x + chart_w + col_gap, c_y + chart_h + row_gap, chart_w, chart_h])
-        self._draw_card_background(fig, ax2)
-        self._draw_role_distribution(ax2, data)
-
-        # Bottom-Left: Salary Histogram
-        ax3 = fig.add_axes([c_x, c_y, chart_w, chart_h])
-        self._draw_card_background(fig, ax3)
-        self._draw_salary_histogram(ax3, data)
-
-        # Bottom-Right: Top Earners
-        ax4 = fig.add_axes([c_x + chart_w + col_gap, c_y, chart_w, chart_h])
-        self._draw_card_background(fig, ax4)
-        self._draw_top_employees(ax4, data)
-
-    def _draw_card_background(self, fig, ax):
-        """Draw a rounded white card behind an axis"""
-        # Turn off axis background so we can draw a custom patch behind it
-        ax.patch.set_alpha(0)
-        
-        # Get position in figure coordinates
-        pos = ax.get_position()
-        x0, y0, width, height = pos.x0, pos.y0, pos.width, pos.height
-        
-        # Draw rounded rectangle on the Figure
-        # Note: Using a slightly larger box for padding
-        pad = 0.00
-        bbox = FancyBboxPatch(
-            (x0 - pad, y0 - pad), width + 2*pad, height + 2*pad,
-            boxstyle="round,pad=0.01,rounding_size=0.02",
-            fc=self.COLORS['card_bg'],
-            ec="#d1d5db", # Light border
-            alpha=1.0,
-            zorder=0,
-            transform=fig.transFigure
-        )
-        fig.patches.append(bbox)
-
-    def _draw_kpi_sidebar(self, fig, data: dict, x, y, w, h):
-        """Draw vertical stack of KPI cards"""
-        
-        # 5 KPIs
-        kpis = [
+        metrics = [
             ("TOTAL EMPLOYEES", str(data['total_employees']), "👥"),
             ("DEPARTMENTS", str(data['total_departments']), "🏢"),
             ("PROJECTS", str(data['total_projects']), "🚀"),
             ("ASSIGNMENTS", str(data['active_assignments']), "📌"),
-            ("AVG SALARY", self._format_salary(data['avg_salary']), "💰"),
+            ("AVG SALARY", self._fmt_money(data['avg_salary']), "💰")
         ]
 
-        count = len(kpis)
-        card_h = (h - (count - 1) * 0.02) / count  # Calculate height per card
-        
-        for i, (label, value, icon) in enumerate(kpis):
-            card_y = y + (count - 1 - i) * (card_h + 0.02) # Stack from top
+        # Vị trí Sidebar
+        x, y_start, w, h = 0.02, 0.90, 0.20, 0.16
+        gap = 0.02
+
+        for i, (title, val, icon) in enumerate(metrics):
+            y = y_start - i * (h + gap)
             
-            # Draw Card Background
-            bbox = FancyBboxPatch(
-                (x, card_y), w, card_h,
-                boxstyle="round,pad=0,rounding_size=0.02",
-                fc=self.COLORS['card_bg'],
-                ec="#d1d5db",
-                transform=fig.transFigure,
-                zorder=1
-            )
+            # Vẽ nền thẻ (Dùng Patch)
+            bbox = FancyBboxPatch((x, y - h + 0.02), w, h, boxstyle="round,pad=0.01", 
+                                  fc='white', ec='#d1d5db', transform=fig.transFigure, zorder=1)
             fig.patches.append(bbox)
             
-            # Add blue accent bar on left
-            accent = FancyBboxPatch(
-                (x, card_y + 0.01), 0.005, card_h - 0.02,
-                boxstyle="round,pad=0,rounding_size=0.002",
-                fc=self.COLORS['primary'],
-                transform=fig.transFigure,
-                zorder=2
-            )
-            fig.patches.append(accent)
+            # Vẽ thanh màu bên trái
+            bar = FancyBboxPatch((x, y - h + 0.03), 0.005, h - 0.02, 
+                                 boxstyle="round,pad=0", fc=self.COLORS['primary'], transform=fig.transFigure, zorder=2)
+            fig.patches.append(bar)
 
-            # Text
+            # Vẽ chữ & Icon
             cx = x + w/2
-            cy = card_y + card_h/2
+            cy = y - h/2 + 0.01
             
-            # Icon (Top)
-            fig.text(cx, cy + 0.05, icon, ha='center', va='center', fontsize=20, color=self.COLORS['secondary'])
-            
-            # Value (Middle)
-            fig.text(cx, cy, value, ha='center', va='center', fontsize=16, fontweight='bold', color=self.COLORS['text_dark'])
-            
-            # Label (Bottom)
-            fig.text(cx, cy - 0.05, label, ha='center', va='center', fontsize=9, color=self.COLORS['text_light'])
+            fig.text(cx, cy + 0.04, icon, ha='center', va='center', color=self.COLORS['secondary'], fontproperties=prop)
+            fig.text(cx, cy - 0.01, val, ha='center', va='center', fontsize=16, fontweight='bold', color='#111827')
+            fig.text(cx, cy - 0.05, title, ha='center', va='center', fontsize=9, color='#6B7280')
 
-    def _format_ax(self, ax, title):
-        """Standard styling for charts"""
-        ax.set_title(title, fontsize=11, fontweight='bold', color=self.COLORS['primary'], pad=15)
-        ax.spines['top'].set_visible(False)
-        ax.spines['right'].set_visible(False)
-        ax.spines['left'].set_color('#cbd5e1')
-        ax.spines['bottom'].set_color('#cbd5e1')
-        ax.tick_params(colors=self.COLORS['text_light'], labelsize=8)
-        ax.grid(axis='x', linestyle='--', alpha=0.3)
+    def _draw_charts(self, fig, data):
+        """Vẽ 4 biểu đồ lưới 2x2"""
+        # Layout: [x, y, width, height]
+        grid = [
+            ([0.26, 0.55, 0.35, 0.38], "Employees by Department"), # Top Left
+            ([0.64, 0.55, 0.35, 0.38], "Project Roles"),           # Top Right
+            ([0.26, 0.08, 0.35, 0.38], "Salary Distribution"),     # Bot Left
+            ([0.64, 0.08, 0.35, 0.38], "Top Earners")              # Bot Right
+        ]
 
-    # --- CHART 1: EMPLOYEES BY DEPARTMENT ---
-    def _draw_employees_by_dept(self, ax, data):
-        dept_data = data.get('employees_by_dept', {})
-        if not dept_data:
-            self._draw_no_data(ax, "Employees by Department")
-            return
+        # 1. Employees by Dept
+        ax1 = fig.add_axes(grid[0][0])
+        self._style_ax(ax1, grid[0][1])
+        d = data['employees_by_dept']
+        if d:
+            items = sorted(d.items(), key=lambda x: x[1], reverse=True)[:6]
+            names, vals = [x[0][:12] for x in items], [x[1] for x in items]
+            y = np.arange(len(names))
+            ax1.barh(y, vals, color=self.COLORS['secondary'], height=0.6)
+            ax1.set_yticks(y); ax1.set_yticklabels(names); ax1.invert_yaxis()
+            for i, v in enumerate(vals): ax1.text(v + 0.1, i, str(v), va='center', fontsize=9)
+        else: self._no_data(ax1)
 
-        sorted_items = sorted(dept_data.items(), key=lambda x: x[1], reverse=True)[:6]
-        depts = [item[0][:15] for item in sorted_items]
-        counts = [item[1] for item in sorted_items]
-        y_pos = np.arange(len(depts))
+        # 2. Roles (Pie)
+        ax2 = fig.add_axes(grid[1][0])
+        self._style_ax(ax2, grid[1][1], grid=False) # Tắt lưới cho Pie chart
+        ax2.axis('off') # Tắt trục
+        d = data['role_distribution']
+        if d:
+            items = sorted(d.items(), key=lambda x: x[1], reverse=True)[:5]
+            names, vals = [x[0] for x in items], [x[1] for x in items]
+            ax2.pie(vals, labels=names, autopct='%1.0f%%', colors=self.COLORS['chart_colors'], 
+                    startangle=90, wedgeprops=dict(width=0.4, edgecolor='white'))
+            ax2.text(0, 0, f"{sum(vals)}\nRoles", ha='center', va='center', fontweight='bold')
+        else: self._no_data(ax2)
 
-        bars = ax.barh(y_pos, counts, color=self.COLORS['secondary'], height=0.6)
-        ax.set_yticks(y_pos)
-        ax.set_yticklabels(depts)
-        ax.invert_yaxis()
+        # 3. Salary Hist
+        ax3 = fig.add_axes(grid[2][0])
+        self._style_ax(ax3, grid[2][1])
+        sal = [s * 10000 / 1000000 for s in data['salary_list']] # Triệu VND
+        if sal:
+            ax3.hist(sal, bins=8, color=self.COLORS['accent'], edgecolor='white', alpha=0.8)
+            ax3.set_xlabel("Million VND", fontsize=8, color='#6B7280')
+        else: self._no_data(ax3)
+
+        # 4. Top Earners
+        ax4 = fig.add_axes(grid[3][0])
+        self._style_ax(ax4, grid[3][1])
+        d = data['top_employees']
+        if d:
+            names = [x[0][:12] for x in d]
+            vals = [x[1] * 10000 / 1000000 for x in d]
+            y = np.arange(len(names))
+            ax4.barh(y, vals, color=self.COLORS['chart_colors'][0], height=0.6)
+            ax4.set_yticks(y); ax4.set_yticklabels(names); ax4.invert_yaxis()
+            for i, v in enumerate(vals): ax4.text(v + 0.1, i, f"{v:.1f}M", va='center', fontsize=8)
+        else: self._no_data(ax4)
+
+    def _style_ax(self, ax, title, grid=True):
+        """Style chuẩn cho biểu đồ - Nền trắng trực tiếp"""
+        ax.set_facecolor('white')  # [QUAN TRỌNG] Đặt nền trắng trực tiếp cho trục
+        ax.set_title(title, fontsize=11, fontweight='bold', color='#111827', pad=10)
         
-        # Add Data Labels
-        for bar in bars:
-            width = bar.get_width()
-            ax.text(width + 0.1, bar.get_y() + bar.get_height()/2, 
-                    f'{int(width)}', ha='left', va='center', fontsize=9, fontweight='bold', color=self.COLORS['text_dark'])
-
-        self._format_ax(ax, "Employees by Department")
-
-    # --- CHART 2: SALARY HISTOGRAM ---
-    def _draw_salary_histogram(self, ax, data):
-        salaries = data.get('salary_list', [])
-        if not salaries:
-            self._draw_no_data(ax, "Salary Distribution")
-            return
-
-        MONEY_SCALE = 10_000
-        salaries_vnd = [s * MONEY_SCALE / 1_000_000 for s in salaries] # Million VND
-
-        n, bins, patches = ax.hist(salaries_vnd, bins=10, color=self.COLORS['accent'], edgecolor='white', alpha=0.9)
+        # Xóa viền
+        for s in ax.spines.values(): s.set_visible(False)
         
-        # Add Data Labels
-        for i in range(len(patches)):
-            if n[i] > 0:
-                ax.text(patches[i].get_x() + patches[i].get_width()/2, n[i], 
-                        str(int(n[i])), ha='center', va='bottom', fontsize=8)
+        # Grid mờ
+        if grid:
+            ax.grid(axis='x', visible=False)
+            ax.grid(axis='y', linestyle=':', alpha=0.5)
+            ax.tick_params(axis='both', colors='#6B7280', labelsize=8, length=0)
 
-        avg = data['avg_salary'] * MONEY_SCALE / 1_000_000
-        ax.axvline(avg, color=self.COLORS['danger'], linestyle='--', linewidth=1.5, label=f'Avg: {avg:.1f}M')
-        ax.legend(fontsize=8, frameon=False)
-        ax.set_xlabel('Million VND', fontsize=8, color=self.COLORS['text_light'])
-        
-        self._format_ax(ax, "Salary Distribution")
+    def _no_data(self, ax):
+        ax.text(0.5, 0.5, "No Data", ha='center', va='center', color='#9CA3AF')
+        ax.set_xticks([]); ax.set_yticks([])
 
-    # --- CHART 3: TOP EMPLOYEES ---
-    def _draw_top_employees(self, ax, data):
-        top_emps = data.get('top_employees', [])
-        if not top_emps:
-            self._draw_no_data(ax, "Top Earners")
-            return
-
-        MONEY_SCALE = 10_000
-        names = [emp[0][:15] for emp in top_emps]
-        salaries = [emp[1] * MONEY_SCALE / 1_000_000 for emp in top_emps] # Million VND
-        y_pos = np.arange(len(names))
-
-        # Gradient colors
-        colors = plt.cm.Blues(np.linspace(0.8, 0.4, len(names)))
-        
-        bars = ax.barh(y_pos, salaries, color=colors, height=0.6)
-        ax.set_yticks(y_pos)
-        ax.set_yticklabels(names)
-        ax.invert_yaxis()
-
-        # Add Data Labels
-        for bar in bars:
-            width = bar.get_width()
-            ax.text(width + 0.2, bar.get_y() + bar.get_height()/2, 
-                    f'{width:.1f}M', ha='left', va='center', fontsize=8)
-
-        self._format_ax(ax, "Top Highest Salaries")
-
-    # --- CHART 4: ROLE DISTRIBUTION ---
-    def _draw_role_distribution(self, ax, data):
-        role_data = data.get('role_distribution', {})
-        if not role_data:
-            self._draw_no_data(ax, "Role Distribution")
-            return
-
-        sorted_roles = sorted(role_data.items(), key=lambda x: x[1], reverse=True)[:6]
-        roles = [r[0] for r in sorted_roles]
-        counts = [r[1] for r in sorted_roles]
-
-        colors = plt.cm.Paired(np.arange(len(roles)))
-
-        wedges, texts, autotexts = ax.pie(
-            counts, labels=roles, autopct='%1.1f%%',
-            colors=colors, startangle=90, pctdistance=0.85,
-            wedgeprops=dict(width=0.4, edgecolor='white'),
-            textprops={'fontsize': 8}
-        )
-
-        for autotext in autotexts:
-            autotext.set_color('white')
-            autotext.set_fontweight('bold')
-
-        # Center Text
-        total = sum(counts)
-        ax.text(0, 0, f'{total}\nRoles', ha='center', va='center', fontsize=10, fontweight='bold', color=self.COLORS['text_dark'])
-        
-        ax.set_title("Project Roles", fontsize=11, fontweight='bold', color=self.COLORS['primary'], pad=15)
-
-    def _draw_no_data(self, ax, title):
-        ax.text(0.5, 0.5, "No Data Available", ha='center', va='center', color=self.COLORS['text_light'])
-        ax.set_title(title, fontsize=11, fontweight='bold', color=self.COLORS['primary'])
-        ax.axis('off')
-
-    def _format_salary(self, amount: float) -> str:
-        if amount == 0: return "0"
-        MONEY_SCALE = 10_000
-        vnd = amount * MONEY_SCALE
-        if vnd >= 1_000_000:
-            return f"{vnd/1_000_000:.1f}M"
-        return f"{vnd:,.0f}"
+    def _fmt_money(self, val):
+        if not val: return "0"
+        vnd = val * 10000
+        return f"{vnd/1000000:.1f}M" if vnd >= 1000000 else f"{vnd:,.0f}"
