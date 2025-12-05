@@ -1,5 +1,11 @@
+from datetime import datetime, date, time
 from decimal import Decimal
 from .exceptions import ValidationError, NotFoundError, DatabaseError
+import re
+
+MONEY_SCALE = 10_000   # DB amount * 10,000 = VNĐ hiển thị
+EMAIL_DOMAIN = "@161Corp.com"
+PHONE_RE = re.compile(r"^0\d{9}$")
 
 def month_number_to_name(month_num: int) -> str:
     """Đổi tháng số qua chữ"""
@@ -47,3 +53,108 @@ def parse_stored_procedure_error(error_msg: str) -> Exception:
         return ValidationError("Lương tháng này đã được ghi nhận")
     else:
         return DatabaseError(f"Lỗi database: {error_msg}")
+    
+def parse_display_date(s: str) -> date:
+    
+    if not s:
+        raise ValidationError("Ngày không được để trống")
+
+    s = s.strip().replace("-", "/")
+
+    try:
+        return datetime.strptime(s, "%d/%m/%Y").date()
+    except ValueError:
+        raise ValidationError("Ngày phải có dạng DD/MM/YYYY (vd: 25/12/2024)")
+
+def format_display_date(d: date) -> str:
+    """Format date -> DD/MM/YYYY"""
+    return d.strftime("%d/%m/%Y")
+
+
+def parse_display_time(s: str) -> time:
+
+    if not s:
+        raise ValidationError("Giờ không được để trống")
+
+    s = s.strip()
+    formats = ["%H:%M", "%H:%M:%S"]
+
+    for fmt in formats:
+        try:
+            return datetime.strptime(s, fmt).time()
+        except ValueError:
+            continue
+
+    raise ValidationError("Giờ phải có dạng HH:MM hoặc HH:MM:SS")
+
+def format_display_time(t: time) -> str:
+
+    if t.second > 0:
+        return t.strftime("%H:%M:%S")
+    return t.strftime("%H:%M")
+
+
+def parse_currency_input(value: str) -> float:
+    """
+    Parse tiền người dùng nhập -> VNĐ.
+    Hỗ trợ: '10,000,000', '10tr', '10 triệu'
+    """
+    if not value:
+        return 0.0
+
+    v = value.lower().replace(",", "").strip()
+
+    # dạng 10tr, 10 triệu
+    if "tr" in v or "triệu" in v:
+        num = float(re.sub(r"[^\d.]", "", v))
+        return num * 1_000_000
+
+    # dạng số thuần
+    try:
+        return float(v)
+    except ValueError:
+        raise ValidationError("Giá trị tiền không hợp lệ")
+
+def to_db_money(vnd_amount: float) -> Decimal:
+    """
+    Convert VNĐ -> DB (chia MONEY_SCALE)
+    VD: 15,000,000 -> 1500 nếu MONEY_SCALE = 10,000
+    """
+    return Decimal(vnd_amount) / Decimal(MONEY_SCALE)
+
+def to_vnd(db_amount) -> float:
+    """
+    Convert DB -> VNĐ (nhân MONEY_SCALE)
+    VD: 1500 -> 15,000,000
+    """
+    return float(db_amount) * MONEY_SCALE
+
+
+def validate_phone(phone: str) -> str:
+    """Validate số điện thoại VN"""
+    if not PHONE_RE.fullmatch(phone):
+        raise ValidationError("Số điện thoại phải gồm 10 số và bắt đầu bằng 0")
+    return phone
+
+def validate_hire_date(hire_date: date) -> None:
+    """Ngày tuyển <= hôm nay"""
+    if hire_date > date.today():
+        raise ValidationError("Ngày tuyển dụng không thể lớn hơn hôm nay")
+
+def ensure_email_domain(email: str) -> str:
+    """
+    Validate email.
+    Nếu không có domain -> tự thêm EMAIL_DOMAIN
+    """
+    if not email or email.strip() == "":
+        raise ValidationError("Email không được để trống")
+
+    email = email.strip()
+
+    if "@" not in email:
+        return email + EMAIL_DOMAIN
+
+    if not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email):
+        raise ValidationError("Email không hợp lệ")
+
+    return email
