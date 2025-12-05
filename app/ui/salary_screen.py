@@ -56,8 +56,8 @@ class SalaryScreen(ttk.Frame):
                     r.get("employee_name"),
                     format_currency_vnd(to_vnd(r.get("base_salary"))),
                     format_currency_vnd(to_vnd(r.get("total_bonus"))),
-                    format_currency_vnd(to_vnd(r.get("total_deductions"))),
-                    format_currency_vnd(to_vnd(r.get("net_salary"))),
+                    format_currency_vnd(to_vnd(r.get("total_deduction"))),
+                    format_currency_vnd(to_vnd(r.get("net_amount"))),
                 ))
         except Exception as e:
             messagebox.showerror("Lỗi", str(e))

@@ -35,13 +35,18 @@ class QueriesScreen(ttk.Frame):
 
     def _call(self):
         k = self.q.get()
-        if k == "query1":
+        if k == "Query 1":
             return self.query_mgr.query_employee_project_roles()
-        if k == "query2":
-            return self.query_mgr.query_department_employee_count()
-        if k == "query3":
-            return self.query_mgr.query_project_assignment_details()
+        if k == "Query 2":
+            return self.query_mgr.query_all_employees_with_roles()
+        if k == "Query 3":
+            return self.query_mgr.query_employee_project_manager()
         return self.query_mgr.query_employees_above_avg_salary()
+        if k == "Query 4":
+            return self.query_mgr.query_above_average_salary()
+
+  
+    
 
     def run(self):
         try:

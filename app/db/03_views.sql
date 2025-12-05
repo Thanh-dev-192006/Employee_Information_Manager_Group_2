@@ -40,6 +40,7 @@ LEFT JOIN (
             WHEN 'December' THEN 12
         END) = bd.bd_month;
 -- View 2: Tham gia dự án
+DROP VIEW IF EXISTS v_project_participation;
 CREATE VIEW v_project_participation AS
 SELECT 
     p.project_id,
@@ -51,6 +52,7 @@ JOIN assignments a ON p.project_id = a.project_id
 GROUP BY p.project_id, p.project_name;
 
 -- View 3: Lịch sử chấm công
+DROP VIEW IF EXISTS v_employee_attendance;
 CREATE VIEW v_employee_attendance AS
 SELECT 
     a.work_date,
