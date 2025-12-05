@@ -12,6 +12,7 @@ class SalaryScreen(ttk.Frame):
         super().__init__(master, padding=10)
         self.managers = managers
         self.sal_mgr = managers["salary"]
+        self.emp_mgr = managers["employee"]
 
         top = ttk.Frame(self)
         top.pack(fill="x")
