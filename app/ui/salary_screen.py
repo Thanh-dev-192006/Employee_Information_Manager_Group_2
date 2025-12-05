@@ -5,6 +5,7 @@ from datetime import datetime
 from app.ui.widgets import SortableTreeview
 from app.dialogs.bonus_deduction_dialog import BonusDeductionDialog
 from app.models.utils.helpers import to_vnd, format_currency_vnd
+from app.models.utils.helpers import month_number_to_name
 
 class SalaryScreen(ttk.Frame):
     def __init__(self, master, managers: dict):
@@ -48,8 +49,9 @@ class SalaryScreen(ttk.Frame):
     def refresh(self):
         for i in self.tree.get_children():
             self.tree.delete(i)
+        month_name = month_number_to_name(int(self.month.get()))  
         try:
-            rows = self.sal_mgr.get_salary_by_month(int(self.month.get()), int(self.year.get()))
+            rows = self.sal_mgr.get_salary_by_month(month_name, int(self.year.get()))
             for r in rows:
                 self.tree.insert("", "end", values=(
                     r.get("employee_id"),
@@ -64,7 +66,7 @@ class SalaryScreen(ttk.Frame):
 
     def on_calc(self):
         try:
-            res = self.sal_mgr.calculate_monthly_salary(int(self.month.get()), int(self.year.get()))
+            res = self.sal_mgr.calculate_salary(str(self.month.get()), int(self.year.get()))
             messagebox.showinfo("OK", res.get("message","Đã tính lương"))
             self.refresh()
         except Exception as e:
