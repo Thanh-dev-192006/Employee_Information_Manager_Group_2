@@ -7,7 +7,7 @@ from ..utils.helpers import parse_stored_procedure_error
 from ..utils.exceptions import *
 
 class EmployeeManager:
-    """Quản lý nhân viên bằng CRUD operations"""
+    """Manage employees with CRUD operations"""
     
     @staticmethod
     def create_employee(full_name: str, gender: str, date_of_birth: date,
@@ -30,7 +30,7 @@ class EmployeeManager:
                 employee_id = row['new_employee_id']
             
             conn.commit()
-            return {"employee_id": employee_id, "message": "Thêm nhân viên thành công"}
+            return {"employee_id": employee_id, "message": "Employee created successfully"}
             
         except mysql.connector.Error as err:
             if conn:
@@ -57,7 +57,7 @@ class EmployeeManager:
             ])
             
             conn.commit()
-            return {"message": "Cập nhật nhân viên thành công"}
+            return {"message": "Employee updated successfully"}
             
         except mysql.connector.Error as err:
             if conn:
@@ -81,13 +81,13 @@ class EmployeeManager:
             cursor.callproc('sp_delete_employee', [employee_id])
             conn.commit()
             
-            return {"message": "Xóa nhân viên thành công"}
+            return {"message": "Employee deleted successfully"}
             
         except mysql.connector.Error as err:
             if conn:
                 conn.rollback()
             if "foreign key constraint" in str(err).lower():
-                raise DeleteConstraintError("Không thể xóa nhân viên vì có dữ liệu liên quan")
+                raise DeleteConstraintError("Cannot delete employee due to related data")
             raise parse_stored_procedure_error(str(err))
         finally:
             if cursor:
@@ -115,7 +115,7 @@ class EmployeeManager:
             return cursor.fetchall()
             
         except mysql.connector.Error as err:
-            raise DatabaseError(f"Lỗi truy vấn: {err}")
+            raise DatabaseError(f"Query error: {err}")
         finally:
             if cursor:
                 cursor.close()
@@ -141,7 +141,7 @@ class EmployeeManager:
             return cursor.fetchone()
             
         except mysql.connector.Error as err:
-            raise DatabaseError(f"Lỗi truy vấn: {err}")
+            raise DatabaseError(f"Query error: {err}")
         finally:
             if cursor:
                 cursor.close()
@@ -171,7 +171,7 @@ class EmployeeManager:
             return cursor.fetchall()
             
         except mysql.connector.Error as err:
-            raise DatabaseError(f"Lỗi tìm kiếm: {err}")
+            raise DatabaseError(f"Search error: {err}")
         finally:
             if cursor:
                 cursor.close()

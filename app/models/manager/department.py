@@ -6,7 +6,7 @@ from ..utils.helpers import parse_stored_procedure_error
 from ..utils.exceptions import *
 
 class DepartmentManager:
-    """Quản lý department với CRUD operations"""
+    """Manage departments with CRUD operations"""
     
     @staticmethod
     def create_department(department_name: str, location: str) -> Dict:
@@ -24,7 +24,7 @@ class DepartmentManager:
                 dept_id = row['new_dept_id']
             
             conn.commit()
-            return {"department_id": dept_id, "message": "Thêm phòng ban thành công"}
+            return {"department_id": dept_id, "message": "Department created successfully"}
             
         except mysql.connector.Error as err:
             if conn:
@@ -48,7 +48,7 @@ class DepartmentManager:
             cursor.callproc('sp_update_department', [department_id, department_name, location])
             conn.commit()
             
-            return {"message": "Cập nhật phòng ban thành công"}
+            return {"message": "Department updated successfully"}
             
         except mysql.connector.Error as err:
             if conn:
@@ -74,20 +74,20 @@ class DepartmentManager:
             count = cursor.fetchone()[0]
             
             if count > 0:
-                raise DeleteConstraintError(f"Không thể xóa phòng ban vì còn {count} nhân viên")
+                raise DeleteConstraintError(f"Cannot delete department: {count} employees remain")
             
             cursor.execute("DELETE FROM departments WHERE department_id = %s", (department_id,))
             
             if cursor.rowcount == 0:
-                raise NotFoundError("Không tìm thấy phòng ban")
+                raise NotFoundError("Department not found")
             
             conn.commit()
-            return {"message": "Xóa phòng ban thành công"}
+            return {"message": "Department deleted successfully"}
             
         except mysql.connector.Error as err:
             if conn:
                 conn.rollback()
-            raise DatabaseError(f"Lỗi xóa phòng ban: {err}")
+            raise DatabaseError(f"Delete department error: {err}")
         finally:
             if cursor:
                 cursor.close()
@@ -117,7 +117,7 @@ class DepartmentManager:
             return cursor.fetchall()
             
         except mysql.connector.Error as err:
-            raise DatabaseError(f"Lỗi truy vấn: {err}")
+            raise DatabaseError(f"Query error: {err}")
         finally:
             if cursor:
                 cursor.close()

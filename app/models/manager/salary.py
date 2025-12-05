@@ -6,7 +6,7 @@ from ..utils.helpers import parse_stored_procedure_error
 from ..utils.exceptions import *
 
 class SalaryManager:
-    """Quản lý chi trả lương"""
+    """Manage salary payments"""
     
     @staticmethod
     def record_salary_payment(employee_id: int, month: str, 
@@ -27,7 +27,7 @@ class SalaryManager:
                 payment_id = row['new_payment_id']
             
             conn.commit()
-            return {"payment_id": payment_id, "message": "Ghi nhận lương thành công"}
+            return {"payment_id": payment_id, "message": "Salary recorded successfully"}
             
         except mysql.connector.Error as err:
             if conn:
@@ -59,7 +59,7 @@ class SalaryManager:
             return cursor.fetchone()
             
         except mysql.connector.Error as err:
-            raise DatabaseError(f"Lỗi tính lương: {err}")
+            raise DatabaseError(f"Salary calculation error: {err}")
         finally:
             if cursor:
                 cursor.close()
@@ -93,7 +93,7 @@ class SalaryManager:
             return cursor.fetchall()
             
         except mysql.connector.Error as err:
-            raise DatabaseError(f"Lỗi truy vấn: {err}")
+            raise DatabaseError(f"Query error: {err}")
         finally:
             if cursor:
                 cursor.close()
@@ -119,7 +119,7 @@ class SalaryManager:
             return cursor.fetchall()
             
         except mysql.connector.Error as err:
-            raise DatabaseError(f"Lỗi truy vấn: {err}")
+            raise DatabaseError(f"Query error: {err}")
         finally:
             if cursor:
                 cursor.close()

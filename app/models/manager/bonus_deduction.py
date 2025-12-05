@@ -26,9 +26,9 @@ class BonusDeductionManager:
             for result in cursor.stored_results():
                 row = result.fetchone()
                 bd_id = row['new_bd_id']
-            
-            conn.commit()
-            return {"bd_id": bd_id, "message": "Thêm thưởng/phạt thành công"}
+
+                conn.commit()
+                return {"bd_id": bd_id, "message": "Added bonus/deduction successfully"}
             
         except mysql.connector.Error as err:
             if conn:
@@ -57,10 +57,10 @@ class BonusDeductionManager:
             cursor.execute(query, (description, amount, bd_id))
             
             if cursor.rowcount == 0:
-                raise NotFoundError("Không tìm thấy bản ghi thưởng/phạt")
+                raise NotFoundError("Bonus/deduction record not found")
             
             conn.commit()
-            return {"message": "Cập nhật thưởng/phạt thành công"}
+            return {"message": "Updated bonus/deduction successfully"}
             
         except mysql.connector.Error as err:
             if conn:
@@ -84,10 +84,10 @@ class BonusDeductionManager:
             cursor.execute("DELETE FROM bonus_deductions WHERE bd_id = %s", (bd_id,))
             
             if cursor.rowcount == 0:
-                raise NotFoundError("Không tìm thấy bản ghi thưởng/phạt")
+                raise NotFoundError("Bonus/deduction record not found")
             
             conn.commit()
-            return {"message": "Xóa thưởng/phạt thành công"}
+            return {"message": "Deleted bonus/deduction successfully"}
             
         except mysql.connector.Error as err:
             if conn:
@@ -128,7 +128,7 @@ class BonusDeductionManager:
             return cursor.fetchall()
             
         except mysql.connector.Error as err:
-            raise DatabaseError(f"Lỗi truy vấn: {err}")
+            raise DatabaseError(f"Query error: {err}")
         finally:
             if cursor:
                 cursor.close()
@@ -164,7 +164,7 @@ class BonusDeductionManager:
             return cursor.fetchall()
             
         except mysql.connector.Error as err:
-            raise DatabaseError(f"Lỗi truy vấn log: {err}")
+            raise DatabaseError(f"Query log error: {err}")
         finally:
             if cursor:
                 cursor.close()

@@ -7,7 +7,7 @@ from app.models.utils.helpers import parse_display_date, parse_display_time, for
 class AttendanceDialog(tk.Toplevel):
     def __init__(self, master, att_mgr, employee_id: int):
         super().__init__(master)
-        self.title("Chấm công")
+        self.title("Attendance")
         self.resizable(False, False)
 
         self.att_mgr = att_mgr
@@ -21,23 +21,23 @@ class AttendanceDialog(tk.Toplevel):
         body = ttk.Frame(self, padding=12)
         body.pack(fill="both", expand=True)
 
-        ttk.Label(body, text="Ngày (DD/MM/YYYY)").grid(row=0, column=0, sticky="w", pady=4)
+        ttk.Label(body, text="Date (DD/MM/YYYY)").grid(row=0, column=0, sticky="w", pady=4)
         ttk.Entry(body, textvariable=self.work_date).grid(row=0, column=1, sticky="ew", pady=4)
 
-        ttk.Label(body, text="Check-in (HH:MM, có thể trống)").grid(row=1, column=0, sticky="w", pady=4)
+        ttk.Label(body, text="Check-in (HH:MM, optional)").grid(row=1, column=0, sticky="w", pady=4)
         ttk.Entry(body, textvariable=self.check_in).grid(row=1, column=1, sticky="ew", pady=4)
 
-        ttk.Label(body, text="Check-out (HH:MM, có thể trống)").grid(row=2, column=0, sticky="w", pady=4)
+        ttk.Label(body, text="Check-out (HH:MM, optional)").grid(row=2, column=0, sticky="w", pady=4)
         ttk.Entry(body, textvariable=self.check_out).grid(row=2, column=1, sticky="ew", pady=4)
 
-        ttk.Label(body, text="Trạng thái").grid(row=3, column=0, sticky="w", pady=4)
+        ttk.Label(body, text="Status").grid(row=3, column=0, sticky="w", pady=4)
         ttk.Combobox(body, textvariable=self.status, values=["Present","Absent","On Leave"], state="readonly")\
             .grid(row=3, column=1, sticky="ew", pady=4)
 
         btns = ttk.Frame(body)
         btns.grid(row=4, column=0, columnspan=2, sticky="e", pady=(10, 0))
-        ttk.Button(btns, text="Hủy", command=self.destroy).pack(side="right", padx=6)
-        ttk.Button(btns, text="Lưu", command=self.on_save).pack(side="right")
+        ttk.Button(btns, text="Cancel", command=self.destroy).pack(side="right", padx=6)
+        ttk.Button(btns, text="Save", command=self.on_save).pack(side="right")
 
         body.columnconfigure(1, weight=1)
         self.grab_set()
@@ -52,7 +52,7 @@ class AttendanceDialog(tk.Toplevel):
             co_t = parse_display_time(co) if co else None
 
             res = self.att_mgr.mark_attendance(self.employee_id, d, ci_t, co_t, self.status.get())
-            messagebox.showinfo("OK", res.get("message","OK"))
+            messagebox.showinfo("Success", res.get("message","OK"))
             self.destroy()
         except Exception as e:
-            messagebox.showerror("Lỗi", str(e))
+            messagebox.showerror("Error", str(e))

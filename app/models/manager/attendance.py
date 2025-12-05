@@ -7,13 +7,13 @@ from ..utils.helpers import parse_stored_procedure_error
 from ..utils.exceptions import *
 
 class AttendanceManager:
-    """Quản lý chấm công của nhân viên"""
+    """Manage employee attendance"""
     
     @staticmethod
     def mark_attendance(employee_id: int, work_date: date, 
                         check_in: Optional[time], check_out: Optional[time],
                         status: str) -> Dict:
-        """Đánh dấu chấm công bằng sp_mark_attendance"""
+        """Mark attendance using stored procedure sp_mark_attendance"""
         conn = None
         cursor = None
         try:
@@ -62,7 +62,7 @@ class AttendanceManager:
             return cursor.fetchall()
             
         except mysql.connector.Error as err:
-            raise DatabaseError(f"Lỗi truy vấn: {err}")
+            raise DatabaseError(f"Query error: {err}")
         finally:
             if cursor:
                 cursor.close()
@@ -71,7 +71,7 @@ class AttendanceManager:
     
     @staticmethod
     def get_monthly_attendance_summary(month: int, year: int) -> List[Dict]:
-        """Có tổng kết chấm công hàng tháng của các department"""
+        """Get monthly attendance summary by department"""
         conn = None
         cursor = None
         try:
@@ -95,7 +95,7 @@ class AttendanceManager:
             return cursor.fetchall()
             
         except mysql.connector.Error as err:
-            raise DatabaseError(f"Lỗi truy vấn: {err}")
+            raise DatabaseError(f"Query error: {err}")
         finally:
             if cursor:
                 cursor.close()

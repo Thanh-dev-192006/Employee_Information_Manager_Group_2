@@ -20,20 +20,20 @@ class EmployeeScreen(ttk.Frame):
         header = ttk.Frame(self)
         header.pack(fill="x")
 
-        ttk.Label(header, text="NHÂN VIÊN", font=("Segoe UI", 14, "bold")).pack(side="left")
+        ttk.Label(header, text="EMPLOYEE", font=("Segoe UI", 14, "bold")).pack(side="left")
 
         actions = ttk.Frame(self)
         actions.pack(fill="x", pady=(10, 6))
 
         self.kw = tk.StringVar()
-        ttk.Label(actions, text="Tìm:").pack(side="left")
+        ttk.Label(actions, text="Search:").pack(side="left")
         ttk.Entry(actions, textvariable=self.kw, width=30).pack(side="left", padx=6)
-        ttk.Button(actions, text="Tìm kiếm", command=self.on_search).pack(side="left")
+        ttk.Button(actions, text="Search", command=self.on_search).pack(side="left")
         ttk.Button(actions, text="Clear", command=self.on_clear).pack(side="left", padx=6)
 
-        ttk.Button(actions, text="Thêm", command=self.on_add).pack(side="right")
-        ttk.Button(actions, text="Sửa", command=self.on_edit).pack(side="right", padx=6)
-        ttk.Button(actions, text="Xóa", command=self.on_delete).pack(side="right")
+        ttk.Button(actions, text="Add", command=self.on_add).pack(side="right")
+        ttk.Button(actions, text="Edit", command=self.on_edit).pack(side="right", padx=6)
+        ttk.Button(actions, text="Delete", command=self.on_delete).pack(side="right")
 
         cols = ("employee_id","full_name","gender","phone_number","email","department_name","position","base_salary_vnd")
         self.tree = SortableTreeview(self, columns=cols, show="headings", height=18)
@@ -41,13 +41,13 @@ class EmployeeScreen(ttk.Frame):
 
         headings = {
             "employee_id": "ID",
-            "full_name": "Họ tên",
-            "gender": "Giới tính",
-            "phone_number": "SĐT",
+            "full_name": "Full Name",
+            "gender": "Gender",
+            "phone_number": "Phone",
             "email": "Email",
-            "department_name": "Phòng ban",
-            "position": "Chức vụ",
-            "base_salary_vnd": "Lương",
+            "department_name": "Department",
+            "position": "Position",
+            "base_salary_vnd": "Salary",
         }
         widths = {"employee_id":60,"full_name":200,"gender":80,"phone_number":120,"email":200,"department_name":140,"position":140,"base_salary_vnd":120}
         for c in cols:
@@ -93,7 +93,7 @@ class EmployeeScreen(ttk.Frame):
                     salary_vnd
                 ))
         except Exception as e:
-            messagebox.showerror("Lỗi", f"Không tải được nhân viên: {e}")
+            messagebox.showerror("Error", f"Could not load employees: {e}")
 
     def on_search(self):
         self.search_keyword = self.kw.get()
@@ -116,7 +116,7 @@ class EmployeeScreen(ttk.Frame):
     def on_edit(self):
         sel = self._selected()
         if not sel:
-            messagebox.showwarning("Thiếu", "Chọn 1 nhân viên để sửa")
+            messagebox.showwarning("Missing", "Select an employee to edit")
             return
         try:
             emp = self.emp_mgr.get_employee_by_id(sel["employee_id"])
@@ -124,21 +124,21 @@ class EmployeeScreen(ttk.Frame):
             self.wait_window(dlg)
             self.refresh()
         except Exception as e:
-            messagebox.showerror("Lỗi", str(e))
+            messagebox.showerror("Error", str(e))
 
     def on_delete(self):
         sel = self._selected()
         if not sel:
-            messagebox.showwarning("Thiếu", "Chọn 1 nhân viên để xóa")
+            messagebox.showwarning("Missing", "Select an employee to delete")
             return
-        if not messagebox.askyesno("Xác nhận", "Xóa nhân viên này?"):
+        if not messagebox.askyesno("Confirm", "Delete this employee?"):
             return
         try:
             res = self.emp_mgr.delete_employee(sel["employee_id"])
-            messagebox.showinfo("OK", res.get("message","Đã xóa"))
+            messagebox.showinfo("OK", res.get("message","Deleted"))
             self.refresh()
         except Exception as e:
-            messagebox.showerror("Lỗi", str(e))
+            messagebox.showerror("Error", str(e))
 
     def prev_page(self):
         if self.search_mode:

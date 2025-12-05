@@ -5,7 +5,7 @@ from app.models.utils.helpers import parse_display_date, format_display_date, pa
 class ProjectDialog(tk.Toplevel):
     def __init__(self, master, managers: dict, mode: str, project: dict | None = None):
         super().__init__(master)
-        self.title("Dự án - " + ("Thêm" if mode=="create" else "Sửa"))
+        self.title("Project - " + ("Create" if mode=="create" else "Edit"))
         self.resizable(False, False)
 
         self.managers = managers
@@ -31,11 +31,11 @@ class ProjectDialog(tk.Toplevel):
             widget.grid(row=r, column=1, sticky="ew", pady=4)
         body.columnconfigure(1, weight=1)
 
-        row("Tên dự án", ttk.Entry(body, textvariable=self.name, width=36), 0)
-        row("Ngày bắt đầu (DD/MM/YYYY)", ttk.Entry(body, textvariable=self.start), 1)
-        row("Ngày kết thúc (DD/MM/YYYY, có thể trống)", ttk.Entry(body, textvariable=self.end), 2)
-        row("Ngân sách (VNĐ)", ttk.Entry(body, textvariable=self.budget), 3)
-        row("Phòng ban", ttk.Combobox(body, textvariable=self.dept, values=list(self.dept_map.keys()), state="readonly"), 4)
+        row("Project Name", ttk.Entry(body, textvariable=self.name, width=36), 0)
+        row("Start Date (DD/MM/YYYY)", ttk.Entry(body, textvariable=self.start), 1)
+        row("End Date (DD/MM/YYYY, optional)", ttk.Entry(body, textvariable=self.end), 2)
+        row("Budget (VND)", ttk.Entry(body, textvariable=self.budget), 3)
+        row("Department", ttk.Combobox(body, textvariable=self.dept, values=list(self.dept_map.keys()), state="readonly"), 4)
 
         if self.mode == "edit":
             # backend update_project chỉ cho đổi name + end_date, nên disable start/budget/dept
@@ -49,8 +49,8 @@ class ProjectDialog(tk.Toplevel):
 
         btns = ttk.Frame(body)
         btns.grid(row=5, column=0, columnspan=2, sticky="e", pady=(10,0))
-        ttk.Button(btns, text="Hủy", command=self.destroy).pack(side="right", padx=6)
-        ttk.Button(btns, text="Lưu", command=self.on_save).pack(side="right")
+        ttk.Button(btns, text="Cancel", command=self.destroy).pack(side="right", padx=6)
+        ttk.Button(btns, text="Save", command=self.on_save).pack(side="right")
 
         self.grab_set()
         self.transient(master)
@@ -59,7 +59,7 @@ class ProjectDialog(tk.Toplevel):
         try:
             name = self.name.get().strip()
             if not name:
-                raise ValueError("Tên dự án không được trống")
+                raise ValueError("Project name cannot be empty")
 
             if self.mode == "create":
                 start_date = parse_display_date(self.start.get())
@@ -76,14 +76,14 @@ class ProjectDialog(tk.Toplevel):
                     raise ValueError("Phòng ban không hợp lệ")
 
                 res = self.proj_mgr.create_project(name, start_date, end_date, budget_db, dept_id)
-                messagebox.showinfo("OK", f"Đã thêm dự án ID: {res.get('project_id')}")
+                messagebox.showinfo("Success", f"Successfully added project ID: {res.get('project_id')}")
             else:
                 project_id = int(self.project["project_id"])
                 end_raw = self.end.get().strip()
                 end_date = parse_display_date(end_raw) if end_raw else None
                 res = self.proj_mgr.update_project(project_id, name, end_date)
-                messagebox.showinfo("OK", res.get("message","Cập nhật OK"))
+                messagebox.showinfo("Success", res.get("message","Update OK"))
 
             self.destroy()
         except Exception as e:
-            messagebox.showerror("Lỗi", str(e))
+            messagebox.showerror("Error", str(e))

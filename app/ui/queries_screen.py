@@ -52,7 +52,7 @@ class QueriesScreen(ttk.Frame):
             self._raw = self._call()
             self.render(self._raw)
         except Exception as e:
-            messagebox.showerror("Lỗi", str(e))
+            messagebox.showerror("Error", str(e))
 
     def render(self, rows):
         for i in self.tree.get_children():
@@ -86,13 +86,13 @@ class QueriesScreen(ttk.Frame):
 
     def export_csv(self):
         if not self._raw:
-            messagebox.showwarning("Thiếu", "Chưa có dữ liệu để export")
+            messagebox.showwarning("Missing", "No data to export")
             return
         path = filedialog.asksaveasfilename(defaultextension=".csv", filetypes=[("CSV","*.csv")])
         if not path:
             return
         try:
             self.query_mgr.export_to_csv(self._raw, path)
-            messagebox.showinfo("OK", f"Đã export: {path}")
+            messagebox.showinfo("OK", f"Exported: {path}")
         except Exception as e:
-            messagebox.showerror("Lỗi", str(e))
+            messagebox.showerror("Error", str(e))

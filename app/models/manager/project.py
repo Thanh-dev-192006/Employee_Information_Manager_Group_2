@@ -7,7 +7,7 @@ from ..utils.helpers import parse_stored_procedure_error
 from ..utils.exceptions import *
 
 class ProjectManager:
-    """Quản lý dự án bằng CRUD operations"""
+    """Manage projects with CRUD operations"""
     
     @staticmethod
     def create_project(project_name: str, start_date: date, end_date: Optional[date],
@@ -28,7 +28,7 @@ class ProjectManager:
                 project_id = row['new_project_id']
             
             conn.commit()
-            return {"project_id": project_id, "message": "Thêm dự án thành công"}
+            return {"project_id": project_id, "message": "Project created successfully"}
             
         except mysql.connector.Error as err:
             if conn:
@@ -52,7 +52,7 @@ class ProjectManager:
             cursor.callproc('sp_update_project', [project_id, project_name, end_date])
             conn.commit()
             
-            return {"message": "Cập nhật dự án thành công"}
+            return {"message": "Project updated successfully"}
             
         except mysql.connector.Error as err:
             if conn:
@@ -76,17 +76,17 @@ class ProjectManager:
             cursor.execute("DELETE FROM projects WHERE project_id = %s", (project_id,))
             
             if cursor.rowcount == 0:
-                raise NotFoundError("Không tìm thấy dự án")
+                raise NotFoundError("Project not found")
             
             conn.commit()
-            return {"message": "Xóa dự án thành công"}
+            return {"message": "Project deleted successfully"}
             
         except mysql.connector.Error as err:
             if conn:
                 conn.rollback()
             if "foreign key constraint" in str(err).lower():
-                raise DeleteConstraintError("Không thể xóa dự án vì có dữ liệu liên quan")
-            raise DatabaseError(f"Lỗi xóa dự án: {err}")
+                raise DeleteConstraintError("Cannot delete project because related data exists")
+            raise DatabaseError(f"Delete project error: {err}")
         finally:
             if cursor:
                 cursor.close()
@@ -124,7 +124,7 @@ class ProjectManager:
             return cursor.fetchall()
             
         except mysql.connector.Error as err:
-            raise DatabaseError(f"Lỗi truy vấn: {err}")
+            raise DatabaseError(f"Query error: {err}")
         finally:
             if cursor:
                 cursor.close()

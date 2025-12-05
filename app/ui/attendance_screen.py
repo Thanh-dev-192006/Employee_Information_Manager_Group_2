@@ -15,13 +15,13 @@ class AttendanceScreen(ttk.Frame):
 
         top = ttk.Frame(self)
         top.pack(fill="x")
-        ttk.Label(top, text="CHẤM CÔNG", font=("Segoe UI", 14, "bold")).pack(side="left")
+        ttk.Label(top, text="ATTENDANCE", font=("Segoe UI", 14, "bold")).pack(side="left")
 
         self.emps = self.emp_mgr.get_all_employees(limit=1000, offset=0)
         self.emp_map = {f'{e["employee_id"]} - {e["full_name"]}': e["employee_id"] for e in self.emps}
 
         self.emp_choice = tk.StringVar(value=(next(iter(self.emp_map.keys())) if self.emp_map else ""))
-        ttk.Label(top, text="Nhân viên:").pack(side="left", padx=(12,4))
+        ttk.Label(top, text="Employee:").pack(side="left", padx=(12,4))
         ttk.Combobox(top, textvariable=self.emp_choice, values=list(self.emp_map.keys()), state="readonly", width=28)\
             .pack(side="left")
 
@@ -29,26 +29,26 @@ class AttendanceScreen(ttk.Frame):
         self.month = tk.IntVar(value=now.month)
         self.year = tk.IntVar(value=now.year)
 
-        ttk.Label(top, text="Tháng:").pack(side="left", padx=(12,4))
+        ttk.Label(top, text="Month:").pack(side="left", padx=(12,4))
         ttk.Combobox(top, textvariable=self.month, values=list(range(1,13)), state="readonly", width=5).pack(side="left")
-        ttk.Label(top, text="Năm:").pack(side="left", padx=(12,4))
+        ttk.Label(top, text="Year:").pack(side="left", padx=(12,4))
         ttk.Combobox(top, textvariable=self.year, values=list(range(now.year-2, now.year+3)), state="readonly", width=7).pack(side="left")
 
-        ttk.Button(top, text="Tải", command=self.refresh).pack(side="left", padx=8)
+        ttk.Button(top, text="Load", command=self.refresh).pack(side="left", padx=8)
         ttk.Button(top, text="Mark", command=self.on_mark).pack(side="right")
 
-        self.stats = ttk.Label(self, text="Thống kê: -")
+        self.stats = ttk.Label(self, text="Statistics: -")
         self.stats.pack(anchor="w", pady=(8,4))
 
         cols = ("work_date","weekday","check_in","check_out","status")
         self.tree = SortableTreeview(self, columns=cols, show="headings", height=16)
         self.tree.pack(fill="both", expand=True)
         for c,t,w in [
-            ("work_date","Ngày",120),
-            ("weekday","Thứ",80),
+            ("work_date","Date",120),
+            ("weekday","Weekday",80),
             ("check_in","Check-in",100),
             ("check_out","Check-out",100),
-            ("status","Trạng thái",120),
+            ("status","Status",120),
         ]:
             self.tree.heading(c, text=t)
             self.tree.column(c, width=w, anchor="w")
@@ -71,7 +71,7 @@ class AttendanceScreen(ttk.Frame):
             present = sum(1 for r in rows if r.get("status") == "Present")
             total = len(rows)
             rate = (present/total*100.0) if total else 0.0
-            self.stats.config(text=f"Thống kê: {present}/{total} ngày đi làm - Tỷ lệ: {rate:.1f}%")
+            self.stats.config(text=f"Statistics: {present}/{total} days present - Rate: {rate:.1f}%")
 
             for r in rows:
                 d = r.get("work_date")
@@ -84,12 +84,12 @@ class AttendanceScreen(ttk.Frame):
                     r.get("status")
                 ))
         except Exception as e:
-            messagebox.showerror("Lỗi", str(e))
+            messagebox.showerror("Error", str(e))
 
     def on_mark(self):
         emp_id = self._emp_id()
         if not emp_id:
-            messagebox.showwarning("Thiếu", "Chọn nhân viên")
+            messagebox.showwarning("Missing", "Please select an employee")
             return
         dlg = AttendanceDialog(self, self.att_mgr, employee_id=emp_id)
         self.wait_window(dlg)

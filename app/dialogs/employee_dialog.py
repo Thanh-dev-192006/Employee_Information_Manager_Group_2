@@ -16,7 +16,7 @@ from app.models.utils.helpers import (
 class EmployeeDialog(tk.Toplevel):
     def __init__(self, master, managers: dict, mode: str, employee: dict | None = None):
         super().__init__(master)
-        self.title("Nhân viên - " + ("Thêm" if mode == "create" else "Sửa"))
+        self.title("Employee - " + ("Create" if mode == "create" else "Edit"))
         self.resizable(False, False)
 
         self.managers = managers
@@ -76,16 +76,16 @@ class EmployeeDialog(tk.Toplevel):
         self.position_entry = ttk.Entry(body, textvariable=self.vars["position"])
         self.salary_entry = ttk.Entry(body, textvariable=self.vars["salary"])
 
-        row("Họ tên", self.full_name_entry, 0)
-        row("Giới tính", self.gender_cb, 1)
-        row("Ngày sinh (DD/MM/YYYY)", self.dob_entry, 2)
-        row("SĐT", self.phone_entry, 3)
+        row("Full Name", self.full_name_entry, 0)
+        row("Gender", self.gender_cb, 1)
+        row("Date of Birth (DD/MM/YYYY)", self.dob_entry, 2)
+        row("Phone", self.phone_entry, 3)
         row("Email", self.email_entry, 4)
-        row("Địa chỉ", self.address_entry, 5)
-        row("Ngày vào làm (DD/MM/YYYY)", self.hire_entry, 6)
-        row("Phòng ban", self.dept_cb, 7)
-        row("Chức vụ", self.position_entry, 8)
-        row("Lương (VNĐ)", self.salary_entry, 9)
+        row("Address", self.address_entry, 5)
+        row("Hire Date (DD/MM/YYYY)", self.hire_entry, 6)
+        row("Department", self.dept_cb, 7)
+        row("Position", self.position_entry, 8)
+        row("Salary (VND)", self.salary_entry, 9)
 
         # NOTE: Backend sp_update_employee không update gender/dob/hire_date/department_id
         if self.mode == "edit":
@@ -96,8 +96,8 @@ class EmployeeDialog(tk.Toplevel):
 
         btns = ttk.Frame(body)
         btns.grid(row=10, column=0, columnspan=2, sticky="e", pady=(10, 0))
-        ttk.Button(btns, text="Hủy", command=self.destroy).pack(side="right", padx=6)
-        ttk.Button(btns, text="Lưu", command=self.on_save).pack(side="right")
+        ttk.Button(btns, text="Cancel", command=self.destroy).pack(side="right", padx=6)
+        ttk.Button(btns, text="Save", command=self.on_save).pack(side="right")
 
         body.columnconfigure(1, weight=1)
         self.grab_set()
@@ -107,7 +107,7 @@ class EmployeeDialog(tk.Toplevel):
     def _collect_common(self):
         full_name = self.vars["full_name"].get().strip()
         if not full_name:
-            raise ValueError("Họ tên không được để trống")
+            raise ValueError("Full name cannot be empty")
 
         phone = self.vars["phone"].get().strip()
         validate_phone(phone)
@@ -118,7 +118,7 @@ class EmployeeDialog(tk.Toplevel):
         address = self.vars["address"].get().strip()
         position = self.vars["position"].get().strip()
         if not position:
-            raise ValueError("Chức vụ không được để trống")
+            raise ValueError("Position cannot be empty")
 
         salary_vnd = parse_currency_input(self.vars["salary"].get())
         validate_salary_vnd(salary_vnd)
@@ -140,23 +140,23 @@ class EmployeeDialog(tk.Toplevel):
                 dept_name = self.vars["department"].get()
                 dept_id = self.dept_map.get(dept_name)
                 if not dept_id:
-                    raise ValueError("Phòng ban không hợp lệ")
+                    raise ValueError("Invalid department")
 
                 res = self.emp_mgr.create_employee(
                     full_name, gender, dob, phone, email, address,
                     hire_date, dept_id, position, base_salary_db
                 )
-                messagebox.showinfo("Thành công", f"Đã thêm nhân viên ID: {res.get('employee_id')}")
+                messagebox.showinfo("Success", f"Added employee ID: {res.get('employee_id')}")
             else:
                 emp_id = int(self.employee["employee_id"])
                 res = self.emp_mgr.update_employee(
                     emp_id, full_name, phone, email, address, position, base_salary_db
                 )
-                messagebox.showinfo("Thành công", res.get("message","Cập nhật thành công"))
+                messagebox.showinfo("Success", res.get("message","Update successful"))
 
             self.destroy()
 
         except (ValidationError, ValueError) as e:
-            messagebox.showerror("Lỗi", str(e))
+            messagebox.showerror("Error", str(e))
         except Exception as e:
-            messagebox.showerror("Lỗi", f"Không lưu được: {e}")
+            messagebox.showerror("Error", f"Could not save: {e}")

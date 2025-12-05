@@ -26,47 +26,47 @@ def month_name_to_number(month_name: str) -> int:
     return months.get(month_name, 0)
 
 def format_currency_vnd(amount: float) -> str:
-    """Format tiền tệ VNĐ. Trả về '0.00 VNĐ' nếu None."""
+    """Format currency in VND. Returns '0.00 VND' if None."""
     if amount is None:
-        return "0.00 VNĐ"
-    return f"{amount:,.2f} VNĐ"
+        return "0.00 VND"
+    return f"{amount:,.2f} VND"
 
 def parse_stored_procedure_error(error_msg: str) -> Exception:
     """Parse error message from stored procedure"""
     if "Email already exists" in error_msg:
-        return ValidationError("Email đã tồn tại trong hệ thống")
+        return ValidationError("Email already exists")
     elif "Phone number already exists" in error_msg:
-        return ValidationError("Số điện thoại đã tồn tại trong hệ thống")
+        return ValidationError("Phone number already exists")
     elif "Department ID does not exist" in error_msg:
-        return ValidationError("Phòng ban không tồn tại")
+        return ValidationError("Department does not exist")
     elif "Employee not found" in error_msg:
-        return NotFoundError("Không tìm thấy nhân viên")
+        return NotFoundError("Employee not found")
     elif "Department not found" in error_msg:
-        return NotFoundError("Không tìm thấy phòng ban")
+        return NotFoundError("Department not found")
     elif "Project not found" in error_msg:
-        return NotFoundError("Không tìm thấy dự án")
+        return NotFoundError("Project not found")
     elif "Hire date cannot be in the future" in error_msg:
-        return ValidationError("Ngày tuyển dụng không thể ở tương lai")
+        return ValidationError("Hire date cannot be in the future")
     elif "Base salary must be greater than 0" in error_msg:
-        return ValidationError("Lương cơ bản phải lớn hơn 0")
+        return ValidationError("Base salary must be greater than 0")
     elif "already assigned to this project" in error_msg:
-        return ValidationError("Nhân viên đã được phân công vào dự án này")
+        return ValidationError("Employee is already assigned to this project")
     elif "already recorded" in error_msg:
-        return ValidationError("Lương tháng này đã được ghi nhận")
+        return ValidationError("Salary for this month is already recorded")
     else:
-        return DatabaseError(f"Lỗi database: {error_msg}")
+        return DatabaseError(f"Database error: {error_msg}")
     
 def parse_display_date(s: str) -> date:
     
     if not s:
-        raise ValidationError("Ngày không được để trống")
+        raise ValidationError("Date must not be empty")
 
     s = s.strip().replace("-", "/")
 
     try:
         return datetime.strptime(s, "%d/%m/%Y").date()
     except ValueError:
-        raise ValidationError("Ngày phải có dạng DD/MM/YYYY (vd: 25/12/2024)")
+        raise ValidationError("Date must be in DD/MM/YYYY format (e.g. 25/12/2024)")
 
 def format_display_date(d: date) -> str:
     """Format date -> DD/MM/YYYY"""
@@ -78,7 +78,7 @@ def format_display_date(d: date) -> str:
 def parse_display_time(s: str) -> time:
 
     if not s:
-        raise ValidationError("Giờ không được để trống")
+        raise ValidationError("Time must not be empty")
 
     s = s.strip()
     formats = ["%H:%M", "%H:%M:%S"]
@@ -90,6 +90,8 @@ def parse_display_time(s: str) -> time:
             continue
 
     raise ValidationError("Giờ phải có dạng HH:MM hoặc HH:MM:SS")
+    
+    # unreachable
 
 def format_display_time(t: time) -> str:
     """Format time -> HH:MM hoặc HH:MM:SS. Trả về '' nếu None."""
@@ -119,7 +121,7 @@ def parse_currency_input(value: str) -> float:
     try:
         return float(v)
     except ValueError:
-        raise ValidationError("Giá trị tiền không hợp lệ")
+        raise ValidationError("Invalid currency value")
 
 def to_db_money(vnd_amount: float) -> Decimal:
     """
@@ -141,18 +143,18 @@ def to_vnd(db_amount) -> float:
 def validate_phone(phone: str) -> str:
     """Validate số điện thoại VN"""
     if not PHONE_RE.fullmatch(phone):
-        raise ValidationError("Số điện thoại phải gồm 10 số và bắt đầu bằng 0")
+        raise ValidationError("Phone must be 10 digits and start with 0")
     return phone
 
 def validate_hire_date(hire_date: date) -> None:
     """Ngày tuyển <= hôm nay"""
     if hire_date > date.today():
-        raise ValidationError("Ngày tuyển dụng không thể lớn hơn hôm nay")
+        raise ValidationError("Hire date cannot be in the future")
 
 def validate_salary_vnd(amount: float) -> float:
-    """Kiểm tra tiền lương hợp lệ (phải > 0)"""
+    """Validate salary in VND (must be > 0)"""
     if amount is None or amount <= 0:
-        raise ValidationError("Tiền lương phải lớn hơn 0")
+        raise ValidationError("Salary must be greater than 0")
     return amount
 
 def ensure_email_domain(email: str) -> str:
@@ -161,7 +163,7 @@ def ensure_email_domain(email: str) -> str:
     Nếu không có domain -> tự thêm EMAIL_DOMAIN
     """
     if not email or email.strip() == "":
-        raise ValidationError("Email không được để trống")
+        raise ValidationError("Email must not be empty")
 
     email = email.strip()
 
@@ -169,6 +171,6 @@ def ensure_email_domain(email: str) -> str:
         return email + EMAIL_DOMAIN
 
     if not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email):
-        raise ValidationError("Email không hợp lệ")
+        raise ValidationError("Invalid email")
 
     return email

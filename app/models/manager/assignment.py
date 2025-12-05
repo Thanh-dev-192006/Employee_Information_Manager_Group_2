@@ -6,12 +6,12 @@ from ..utils.helpers import parse_stored_procedure_error
 from ..utils.exceptions import *
 
 class AssignmentManager:
-    """Quản lý phân công dự án"""
+    """Manage project assignments"""
     
     @staticmethod
     def create_assignment(employee_id: int, project_id: int, 
                             role: str, hours_worked: float = 0) -> Dict:
-        """Phân công bằng sp_assign_project"""
+        """Assign using stored procedure sp_assign_project"""
         conn = None
         cursor = None
         try:
@@ -27,7 +27,7 @@ class AssignmentManager:
                 assignment_id = row['new_assignment_id']
             
             conn.commit()
-            return {"assignment_id": assignment_id, "message": "Phân công thành công"}
+            return {"assignment_id": assignment_id, "message": "Assignment created successfully"}
             
         except mysql.connector.Error as err:
             if conn:
@@ -56,15 +56,15 @@ class AssignmentManager:
             cursor.execute(query, (role, hours_worked, assignment_id))
             
             if cursor.rowcount == 0:
-                raise NotFoundError("Không tìm thấy việc phân công")
+                raise NotFoundError("Assignment not found")
             
             conn.commit()
-            return {"message": "Cập nhật phân công thành công"}
+            return {"message": "Assignment updated successfully"}
             
         except mysql.connector.Error as err:
             if conn:
                 conn.rollback()
-            raise DatabaseError(f"Lỗi cập nhật: {err}")
+            raise DatabaseError(f"Update error: {err}")
         finally:
             if cursor:
                 cursor.close()
@@ -83,15 +83,15 @@ class AssignmentManager:
             cursor.execute("DELETE FROM assignments WHERE assignment_id = %s", (assignment_id,))
             
             if cursor.rowcount == 0:
-                raise NotFoundError("Không tìm thấy việc phân công")
+                raise NotFoundError("Assignment not found")
             
             conn.commit()
-            return {"message": "Xóa phân công thành công"}
+            return {"message": "Assignment deleted successfully"}
             
         except mysql.connector.Error as err:
             if conn:
                 conn.rollback()
-            raise DatabaseError(f"Lỗi xóa: {err}")
+            raise DatabaseError(f"Delete error: {err}")
         finally:
             if cursor:
                 cursor.close()
@@ -118,7 +118,7 @@ class AssignmentManager:
             return cursor.fetchall()
             
         except mysql.connector.Error as err:
-            raise DatabaseError(f"Lỗi truy vấn: {err}")
+            raise DatabaseError(f"Query error: {err}")
         finally:
             if cursor:
                 cursor.close()
@@ -145,7 +145,7 @@ class AssignmentManager:
             return cursor.fetchall()
             
         except mysql.connector.Error as err:
-            raise DatabaseError(f"Lỗi truy vấn: {err}")
+            raise DatabaseError(f"Query error: {err}")
         finally:
             if cursor:
                 cursor.close()

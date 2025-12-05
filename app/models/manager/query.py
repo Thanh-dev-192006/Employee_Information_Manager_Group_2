@@ -42,7 +42,7 @@ class QueryManager:
             return cursor.fetchall()
 
         except mysql.connector.Error as err:
-            raise DatabaseError(f"Lỗi truy vấn: {err}")
+            raise DatabaseError(f"Query error: {err}")
         finally:
             if cursor:
                 cursor.close()
@@ -72,8 +72,8 @@ class QueryManager:
                     a.role AS project_role,
                     a.hours_worked,
                     CASE 
-                        WHEN a.assignment_id IS NULL THEN 'Chưa có dự án'
-                        ELSE 'Đang tham gia dự án'
+                        WHEN a.assignment_id IS NULL THEN 'No project'
+                        ELSE 'Assigned to project'
                     END AS assignment_status
                 FROM employees e
                 JOIN departments d ON e.department_id = d.department_id
@@ -85,7 +85,7 @@ class QueryManager:
             return cursor.fetchall()
 
         except mysql.connector.Error as err:
-            raise DatabaseError(f"Lỗi truy vấn: {err}")
+            raise DatabaseError(f"Query error: {err}")
         finally:
             if cursor:
                 cursor.close()
@@ -127,7 +127,7 @@ class QueryManager:
             return cursor.fetchall()
 
         except mysql.connector.Error as err:
-            raise DatabaseError(f"Lỗi truy vấn: {err}")
+            raise DatabaseError(f"Query error: {err}")
         finally:
             if cursor:
                 cursor.close()
@@ -168,7 +168,7 @@ class QueryManager:
             return cursor.fetchall()
 
         except mysql.connector.Error as err:
-            raise DatabaseError(f"Lỗi truy vấn: {err}")
+            raise DatabaseError(f"Query error: {err}")
         finally:
             if cursor:
                 cursor.close()
@@ -180,7 +180,7 @@ class QueryManager:
         """Export query results to CSV file"""
         try:
             if not data:
-                raise ValueError("Không có dữ liệu để export")
+                raise ValueError("No data to export")
 
             with open(filename, "w", newline="", encoding="utf-8-sig") as csvfile:
                 fieldnames = list(data[0].keys())
@@ -199,10 +199,10 @@ class QueryManager:
                     writer.writerow(processed_row)
 
             return {
-                "message": f"Đã export {len(data)} dòng vào {filename}",
+                "message": f"Exported {len(data)} rows to {filename}",
                 "rows": len(data),
                 "filename": filename,
             }
 
         except Exception as e:
-            raise DatabaseError(f"Lỗi export CSV: {e}")
+            raise DatabaseError(f"CSV export error: {e}")

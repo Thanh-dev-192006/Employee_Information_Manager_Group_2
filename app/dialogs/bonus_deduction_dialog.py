@@ -6,7 +6,7 @@ from app.models.utils.helpers import parse_display_date, parse_currency_input, t
 class BonusDeductionDialog(tk.Toplevel):
     def __init__(self, master, managers: dict):
         super().__init__(master)
-        self.title("Thưởng / Phạt")
+        self.title("Bonus / Deduction")
         self.resizable(False, False)
 
         self.emp_mgr = managers["employee"]
@@ -24,27 +24,27 @@ class BonusDeductionDialog(tk.Toplevel):
         body = ttk.Frame(self, padding=12)
         body.pack(fill="both", expand=True)
 
-        ttk.Label(body, text="Nhân viên").grid(row=0, column=0, sticky="w", pady=4)
+        ttk.Label(body, text="Employee").grid(row=0, column=0, sticky="w", pady=4)
         ttk.Combobox(body, textvariable=self.emp, values=list(self.emp_map.keys()), state="readonly", width=36)\
             .grid(row=0, column=1, sticky="ew", pady=4)
 
-        ttk.Label(body, text="Loại").grid(row=1, column=0, sticky="w", pady=4)
+        ttk.Label(body, text="Type").grid(row=1, column=0, sticky="w", pady=4)
         ttk.Combobox(body, textvariable=self.typ, values=["Bonus","Deduction"], state="readonly")\
             .grid(row=1, column=1, sticky="ew", pady=4)
 
-        ttk.Label(body, text="Số tiền (VNĐ)").grid(row=2, column=0, sticky="w", pady=4)
+        ttk.Label(body, text="Amount (VND)").grid(row=2, column=0, sticky="w", pady=4)
         ttk.Entry(body, textvariable=self.amount).grid(row=2, column=1, sticky="ew", pady=4)
 
-        ttk.Label(body, text="Lý do").grid(row=3, column=0, sticky="w", pady=4)
+        ttk.Label(body, text="Reason").grid(row=3, column=0, sticky="w", pady=4)
         ttk.Entry(body, textvariable=self.reason).grid(row=3, column=1, sticky="ew", pady=4)
 
-        ttk.Label(body, text="Ngày hiệu lực (DD/MM/YYYY)").grid(row=4, column=0, sticky="w", pady=4)
+        ttk.Label(body, text="Effective Date (DD/MM/YYYY)").grid(row=4, column=0, sticky="w", pady=4)
         ttk.Entry(body, textvariable=self.eff).grid(row=4, column=1, sticky="ew", pady=4)
 
         btns = ttk.Frame(body)
         btns.grid(row=5, column=0, columnspan=2, sticky="e", pady=(10, 0))
-        ttk.Button(btns, text="Hủy", command=self.destroy).pack(side="right", padx=6)
-        ttk.Button(btns, text="Lưu", command=self.on_save).pack(side="right")
+        ttk.Button(btns, text="Cancel", command=self.destroy).pack(side="right", padx=6)
+        ttk.Button(btns, text="Save", command=self.on_save).pack(side="right")
 
         body.columnconfigure(1, weight=1)
         self.grab_set()
@@ -54,18 +54,18 @@ class BonusDeductionDialog(tk.Toplevel):
         try:
             emp_id = self.emp_map.get(self.emp.get())
             if not emp_id:
-                raise ValueError("Nhân viên không hợp lệ")
+                raise ValueError("Invalid employee")
 
             vnd = parse_currency_input(self.amount.get())
             if vnd <= 0:
-                raise ValueError("Số tiền phải > 0")
+                raise ValueError("Amount must be > 0")
             amt_db = to_db_money(vnd)
 
             desc = self.reason.get().strip() or "N/A"
             eff_date = parse_display_date(self.eff.get())
 
             res = self.bd_mgr.create_bonus_deduction(emp_id, self.typ.get(), amt_db, desc, eff_date)
-            messagebox.showinfo("OK", res.get("message","OK"))
+            messagebox.showinfo("Success", res.get("message","OK"))
             self.destroy()
         except Exception as e:
-            messagebox.showerror("Lỗi", str(e))
+            messagebox.showerror("Error", str(e))

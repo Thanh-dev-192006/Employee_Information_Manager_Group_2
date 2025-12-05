@@ -4,7 +4,7 @@ from tkinter import ttk, messagebox
 class AssignmentDialog(tk.Toplevel):
     def __init__(self, master, managers: dict, project_id: int):
         super().__init__(master)
-        self.title("Phân công nhân viên")
+        self.title("Employee Assignment")
         self.resizable(False, False)
 
         self.assign_mgr = managers["assignment"]
@@ -21,20 +21,20 @@ class AssignmentDialog(tk.Toplevel):
         body = ttk.Frame(self, padding=12)
         body.pack(fill="both", expand=True)
 
-        ttk.Label(body, text="Chọn nhân viên").grid(row=0, column=0, sticky="w", pady=4)
+        ttk.Label(body, text="Select Employee").grid(row=0, column=0, sticky="w", pady=4)
         ttk.Combobox(body, textvariable=self.emp, values=list(self.emp_map.keys()), state="readonly", width=36)\
             .grid(row=0, column=1, sticky="ew", pady=4)
 
-        ttk.Label(body, text="Vai trò").grid(row=1, column=0, sticky="w", pady=4)
+        ttk.Label(body, text="Role").grid(row=1, column=0, sticky="w", pady=4)
         ttk.Entry(body, textvariable=self.role).grid(row=1, column=1, sticky="ew", pady=4)
 
-        ttk.Label(body, text="Giờ làm (hours_worked)").grid(row=2, column=0, sticky="w", pady=4)
+        ttk.Label(body, text="Hours Worked (hours_worked)").grid(row=2, column=0, sticky="w", pady=4)
         ttk.Entry(body, textvariable=self.hours).grid(row=2, column=1, sticky="ew", pady=4)
 
         btns = ttk.Frame(body)
         btns.grid(row=3, column=0, columnspan=2, sticky="e", pady=(10, 0))
-        ttk.Button(btns, text="Hủy", command=self.destroy).pack(side="right", padx=6)
-        ttk.Button(btns, text="Lưu", command=self.on_save).pack(side="right")
+        ttk.Button(btns, text="Cancel", command=self.destroy).pack(side="right", padx=6)
+        ttk.Button(btns, text="Save", command=self.on_save).pack(side="right")
 
         body.columnconfigure(1, weight=1)
         self.grab_set()
@@ -44,22 +44,22 @@ class AssignmentDialog(tk.Toplevel):
         try:
             emp_id = self.emp_map.get(self.emp.get())
             if not emp_id:
-                raise ValueError("Nhân viên không hợp lệ")
+                raise ValueError("Invalid employee")
 
             role = self.role.get().strip()
             if not role:
-                raise ValueError("Vai trò không được trống")
+                raise ValueError("Role cannot be empty")
 
             try:
                 hours = float(self.hours.get().strip())
             except ValueError:
-                raise ValueError("Giờ làm phải là số")
+                raise ValueError("Hours worked must be a number")
 
             if hours < 0 or hours > 24:
-                raise ValueError("Giờ làm phải từ 0-24")
+                raise ValueError("Hours worked must be between 0 and 24")
 
             res = self.assign_mgr.create_assignment(emp_id, self.project_id, role, hours)
-            messagebox.showinfo("OK", res.get("message","Phân công OK"))
+            messagebox.showinfo("Success", res.get("message","Assignment OK"))
             self.destroy()
         except Exception as e:
-            messagebox.showerror("Lỗi", str(e))
+            messagebox.showerror("Error", str(e))
