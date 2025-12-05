@@ -26,7 +26,9 @@ def month_name_to_number(month_name: str) -> int:
     return months.get(month_name, 0)
 
 def format_currency_vnd(amount: float) -> str:
-    """Format tiền tệ VNĐ"""
+    """Format tiền tệ VNĐ. Trả về '0.00 VNĐ' nếu None."""
+    if amount is None:
+        return "0.00 VNĐ"
     return f"{amount:,.2f} VNĐ"
 
 def parse_stored_procedure_error(error_msg: str) -> Exception:
@@ -88,7 +90,9 @@ def parse_display_time(s: str) -> time:
     raise ValidationError("Giờ phải có dạng HH:MM hoặc HH:MM:SS")
 
 def format_display_time(t: time) -> str:
-
+    """Format time -> HH:MM hoặc HH:MM:SS. Trả về '' nếu None."""
+    if t is None:
+        return ""
     if t.second > 0:
         return t.strftime("%H:%M:%S")
     return t.strftime("%H:%M")
@@ -140,6 +144,12 @@ def validate_hire_date(hire_date: date) -> None:
     """Ngày tuyển <= hôm nay"""
     if hire_date > date.today():
         raise ValidationError("Ngày tuyển dụng không thể lớn hơn hôm nay")
+
+def validate_salary_vnd(amount: float) -> float:
+    """Kiểm tra tiền lương hợp lệ (phải > 0)"""
+    if amount is None or amount <= 0:
+        raise ValidationError("Tiền lương phải lớn hơn 0")
+    return amount
 
 def ensure_email_domain(email: str) -> str:
     """
