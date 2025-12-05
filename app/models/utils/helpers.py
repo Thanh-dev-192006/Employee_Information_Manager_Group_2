@@ -70,6 +70,8 @@ def parse_display_date(s: str) -> date:
 
 def format_display_date(d: date) -> str:
     """Format date -> DD/MM/YYYY"""
+    if d is None:
+        return ""
     return d.strftime("%d/%m/%Y")
 
 
@@ -131,6 +133,8 @@ def to_vnd(db_amount) -> float:
     Convert DB -> VNĐ (nhân MONEY_SCALE)
     VD: 1500 -> 15,000,000
     """
+    if db_amount is None:
+        return 0.0  
     return float(db_amount) * MONEY_SCALE
 
 

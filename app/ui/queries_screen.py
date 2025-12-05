@@ -41,7 +41,7 @@ class QueriesScreen(ttk.Frame):
             return self.query_mgr.query_all_employees_with_roles()
         if k == "query3":
             return self.query_mgr.query_employee_project_manager()
-        return self.query_mgr.query_employees_above_average_salary()
+        return self.query_mgr.query_above_average_salary()
         
 
   

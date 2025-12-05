@@ -14,6 +14,7 @@ from .helpers import (
     to_vnd,
     validate_phone,
     validate_hire_date,
+    validate_salary_vnd,
     ensure_email_domain
 )
 
@@ -35,5 +36,6 @@ __all__ = [
     'to_vnd',
     'validate_phone',
     'validate_hire_date',
-    'ensure_email_domain'
+    'ensure_email_domain',
+    'validate_salary_vnd'
 ]

@@ -65,8 +65,9 @@ class SalaryScreen(ttk.Frame):
             messagebox.showerror("Lỗi", str(e))
 
     def on_calc(self):
+        month_name = month_number_to_name(int(self.month.get()))
         try:
-            res = self.sal_mgr.calculate_salary(str(self.month.get()), int(self.year.get()))
+            res = self.sal_mgr.calculate_salary(int(self.employee_id.get()) ,month_name, int(self.year.get()))
             messagebox.showinfo("OK", res.get("message","Đã tính lương"))
             self.refresh()
         except Exception as e:
