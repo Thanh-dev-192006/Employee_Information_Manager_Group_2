@@ -6,7 +6,7 @@ class DatabaseConnection:
         config = {
             "host": "localhost",
             "user": "root",
-            "password": "T&t121106",
+            "password": "Thanh@123",
             "database": "employee_manager",
             "charset": "utf8mb4",
             "use_unicode": True,
