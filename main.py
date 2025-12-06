@@ -27,6 +27,14 @@ class App(ttk.Window):
         # Chọn theme ở đây (bạn có thể thử: "litera", "cosmo", "flatly", "journal")
         super().__init__(themename="litera")
 
+        style = ttk.Style()
+        style.configure("Treeview", 
+                        font=("Segoe UI", 11), 
+                        rowheight=53)
+        
+        style.configure("Treeview.Heading", 
+                        font=("Segoe UI", 12, "bold"))
+
         self.title("Employee Information Manager - 161Corp")
         self.geometry("1280x800")
 
