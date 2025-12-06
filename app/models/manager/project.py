@@ -73,6 +73,7 @@ class ProjectManager:
             conn = DatabaseConnection.get_connection()
             cursor = conn.cursor()
             
+            cursor.execute("DELETE FROM assignments WHERE project_id = %s", (project_id,))
             cursor.execute("DELETE FROM projects WHERE project_id = %s", (project_id,))
             
             if cursor.rowcount == 0:
@@ -84,8 +85,6 @@ class ProjectManager:
         except mysql.connector.Error as err:
             if conn:
                 conn.rollback()
-            if "foreign key constraint" in str(err).lower():
-                raise DeleteConstraintError("Cannot delete project because related data exists")
             raise DatabaseError(f"Delete project error: {err}")
         finally:
             if cursor:

@@ -21,6 +21,8 @@ class SalaryScreen(ttk.Frame):
         self.emp_mgr = managers["employee"]
 
         self.page = 0
+        self.search_keyword = ""
+        self.search_exact_id = None
 
         self.sort_col = "employee_id"
         self.sort_desc = False
@@ -53,16 +55,21 @@ class SalaryScreen(ttk.Frame):
         self.emp_map = {f'{e["employee_id"]} - {e["full_name"]}': e["employee_id"] for e in self.emps}
 
         ttk.Label(action_bar, text="Employee:").pack(side="left")
-        self.employee_id = tk.StringVar(value=(next(iter(self.emp_map.keys())) if self.emp_map else ""))
+        self.employee_id = tk.StringVar(value="")
         ttk.Combobox(
             action_bar,
             textvariable=self.employee_id,
             values=list(self.emp_map.keys()),
-            state="readonly",
+            state="normal",
             width=30
-        ).pack(side="left", padx=(4, 12))
+        ).pack(side="left", padx=(4, 5))
 
-
+        ttk.Button(
+            action_bar, 
+            text="Find", 
+            bootstyle="info",
+            command=self.on_find_employee
+        ).pack(side="left", padx=(0, 12))
 
         ttk.Button(top, text="Auto Calculate Salary", command=self.on_calc).pack(side="right")
         ttk.Button(top, text="Add Bonus/Deduction", command=self.on_add_bd).pack(side="right", padx=6)
@@ -110,28 +117,64 @@ class SalaryScreen(ttk.Frame):
     def refresh(self):
         for i in self.tree.get_children():
             self.tree.delete(i)
+            
         month_name = month_number_to_name(int(self.month.get()))  
         sort_order = "DESC" if self.sort_desc else "ASC"
 
         try:
-            rows = self.sal_mgr.get_salary_by_month(
-                month_name,
-                int(self.year.get()),
-                limit=self.PAGE_SIZE,
-                offset=self.page * self.PAGE_SIZE,
-                sort_by=self.sort_col,    
-                sort_order=sort_order
+            if not self.search_keyword and self.search_exact_id is None:
+                rows = self.sal_mgr.get_salary_by_month(
+                    month_name,
+                    int(self.year.get()),
+                    limit=self.PAGE_SIZE,
+                    offset=self.page * self.PAGE_SIZE,
+                    sort_by=self.sort_col,    
+                    sort_order=sort_order
                 )
-            total_records = self.sal_mgr.count_salary_records()
+                total_records = self.sal_mgr.count_salary_records()
             
+            else:
+                all_rows = self.sal_mgr.get_salary_by_month(
+                    month_name,
+                    int(self.year.get()),
+                    limit=100000,
+                    offset=0,
+                    sort_by=self.sort_col,
+                    sort_order=sort_order
+                )
+                
+                filtered_rows = []
+                for r in all_rows:
+                    if self.search_exact_id is not None:
+                        if r.get("employee_id") == self.search_exact_id:
+                            filtered_rows.append(r)
+                    
+                    elif self.search_keyword:
+                        emp_id_str = str(r.get("employee_id", ""))
+                        emp_name_str = r.get("employee_name", "").lower()
+                        
+                        if self.search_keyword in emp_id_str or self.search_keyword in emp_name_str:
+                            filtered_rows.append(r)
+                
+                total_records = len(filtered_rows)
+                start_idx = self.page * self.PAGE_SIZE
+                end_idx = start_idx + self.PAGE_SIZE
+                rows = filtered_rows[start_idx:end_idx]
+
             self.pager.set_page(self.page)
             
             max_page = math.ceil(total_records / self.PAGE_SIZE) - 1
             if max_page < 0: max_page = 0
             
+            if self.page > max_page and total_records > 0:
+                self.page = max_page
+                self.refresh()
+                return
+
             can_prev = (self.page > 0)
             can_next = (self.page < max_page)
             self.pager.update_state(can_prev, can_next)
+            
             for r in rows:
                 self.tree.insert("", "end", values=(
                     r.get("employee_id"),
@@ -141,6 +184,7 @@ class SalaryScreen(ttk.Frame):
                     format_currency_vnd(to_vnd(r.get("total_deduction"))),
                     format_currency_vnd(to_vnd(r.get("net_amount"))),
                 ))
+                
         except Exception as e:
             messagebox.showerror("Error", str(e))
 
@@ -152,6 +196,36 @@ class SalaryScreen(ttk.Frame):
     def next_page(self):
         self.page += 1
         self.refresh()
+
+    def on_find_employee(self):
+        raw_text = self.employee_id.get().strip()
+        
+        self.search_keyword = ""
+        self.search_exact_id = None
+        
+        if not raw_text:
+            self.page = 0
+            self.refresh()
+            return
+
+        if " - " in raw_text:
+            try:
+                part0 = raw_text.split(" - ")[0]
+                if part0.isdigit():
+                    self.search_exact_id = int(part0)
+            except:
+                pass
+        
+        if self.search_exact_id is None:
+            self.search_keyword = raw_text.lower()
+            
+        self.page = 0
+        self.refresh()
+
+    def _get_selected_emp_id(self):
+        txt = self.employee_id.get()
+        if not txt: return None
+        return self.emp_map.get(txt)
 
     def on_calc(self):
         emp_id = self._get_selected_emp_id()
