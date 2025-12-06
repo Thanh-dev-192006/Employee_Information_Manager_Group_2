@@ -40,9 +40,12 @@ class ProjectScreen(ttk.Frame):
         }
         for c in cols:
             self.tree.heading(c, text=heads[c])
-            self.tree.column(c, width=120, anchor="w")
-        self.tree.column("project_id", width=60)
-        self.tree.column("project_name", width=220)
+            self.tree.column(c, width=130, anchor="w")
+            
+        self.tree.column("project_id", width=60, anchor="center")
+        self.tree.column("project_name", width=250)
+        self.tree.column("budget_vnd", width=160)
+        self.tree.column("department_name", width=180)
         self.tree.enable_sorting()
 
         self.refresh()

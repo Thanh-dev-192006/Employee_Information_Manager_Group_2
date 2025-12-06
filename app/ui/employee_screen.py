@@ -55,13 +55,24 @@ class EmployeeScreen(ttk.Frame):
             "position": "Position",
             "base_salary_vnd": "Salary",
         }
-        widths = {"employee_id":60,"full_name":200,"gender":80,"phone_number":120,"email":200,"department_name":140,"position":140,"base_salary_vnd":120}
+        widths = {
+            "employee_id": 60,
+            "full_name": 200,
+            "gender": 80,
+            "phone_number": 120,
+            "email": 230,            
+            "department_name": 160,   
+            "position": 150,
+            "base_salary_vnd": 160    
+        }
         
         for c in cols:
-            # --- [SỬA] Thay vì self.tree.heading(c, text=...), ta thêm command=...
-            # Gọi hàm on_sort khi bấm vào tiêu đề
             self.tree.heading(c, text=headings[c], command=lambda _col=c: self.on_sort(_col))
-            self.tree.column(c, width=widths[c], anchor="w")
+            if c == "employee_id":
+                anchor = "center"
+            else:
+                anchor = "w"
+            self.tree.column(c, width=widths[c], anchor=anchor)
 
         self.pager = PaginationBar(self, self.prev_page, self.next_page)
         self.pager.pack(fill="x", pady=(6,0))

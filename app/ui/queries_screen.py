@@ -64,13 +64,42 @@ class QueriesScreen(ttk.Frame):
 
         cols = list(rows[0].keys())
         self.tree["columns"] = cols
+        special_widths = {
+            "employee_id": 100,
+            "full_name": 200,
+            "email": 220,
+            "project_name": 230,
+            "department_name": 200,
+            "position": 160,
+            "base_salary": 115,
+            "hours_worked": 110,
+            "project_role": 150,
+            "manager_email": 190
+        }
+
         for c in cols:
             self.tree.heading(c, text=c)
-            self.tree.column(c, width=160, anchor="w")
+            w = special_widths.get(c, 150)
+            if "_id" in c or c == "id" or "total_assignments" in c: 
+                anchor = "center"
+            else: 
+                anchor = "w"
+            self.tree.column(c, width=w, anchor=anchor)
         self.tree.enable_sorting()
 
         for r in rows:
-            self.tree.insert("", "end", values=[r.get(c,"") for c in cols])
+            row_values = []
+            for c in cols:
+                val = r.get(c, "")
+                if c in ["base_salary", "overall_avg_base_salary", "difference", "budget"]:
+                    try:
+                        val = f"{float(val):,.0f}"
+                    except (ValueError, TypeError):
+                        pass
+                
+                row_values.append(val)
+
+            self.tree.insert("", "end", values=row_values)
 
     def apply_filter(self):
         kw = self.search.get().strip().lower()

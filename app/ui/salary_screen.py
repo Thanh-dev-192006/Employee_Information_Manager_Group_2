@@ -59,10 +59,22 @@ class SalaryScreen(ttk.Frame):
             "base_salary_vnd":"Base Salary","total_bonus_vnd":"Bonus",
             "total_deduction_vnd":"Deduction","net_amount_vnd":"Net Amount"
         }
-        widths = {"employee_id":60,"employee_name":220,"base_salary_vnd":140,"total_bonus_vnd":120,"total_deduction_vnd":120,"net_amount_vnd":140}
+        widths = {
+            "employee_id": 60,
+            "employee_name": 220,
+            "base_salary_vnd": 180,      
+            "total_bonus_vnd": 160,      
+            "total_deduction_vnd": 160,  
+            "net_amount_vnd": 180       
+        }
+        
         for c in cols:
             self.tree.heading(c, text=heads[c])
-            self.tree.column(c, width=widths[c], anchor="w")
+            if "id" in c:          
+                anchor = "center"
+            else:                        
+                anchor = "w"
+            self.tree.column(c, width=widths[c], anchor=anchor)
         self.tree.enable_sorting()
 
         self.refresh()

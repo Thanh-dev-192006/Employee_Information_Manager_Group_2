@@ -26,10 +26,9 @@ def month_name_to_number(month_name: str) -> int:
     return months.get(month_name, 0)
 
 def format_currency_vnd(amount: float) -> str:
-    """Format currency in VND. Returns '0.00 VND' if None."""
     if amount is None:
-        return "0.00 VND"
-    return f"{amount:,.2f} VND"
+        return "0 VND"
+    return f"{amount:,.0f} VND"
 
 def parse_stored_procedure_error(error_msg: str) -> Exception:
     """Parse error message from stored procedure"""
