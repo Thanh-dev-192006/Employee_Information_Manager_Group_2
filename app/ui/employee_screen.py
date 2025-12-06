@@ -42,6 +42,9 @@ class EmployeeScreen(ttk.Frame):
         self.tree = SortableTreeview(self, columns=cols, show="headings", height=15, style="BigRow.Treeview")
         self.tree.pack(fill="both", expand=True)
 
+        self.sort_col = "employee_id"
+        self.sort_desc = False  # False = Tăng dần (ASC), True = Giảm dần (DESC)
+
         headings = {
             "employee_id": "ID",
             "full_name": "Full Name",
@@ -53,11 +56,12 @@ class EmployeeScreen(ttk.Frame):
             "base_salary_vnd": "Salary",
         }
         widths = {"employee_id":60,"full_name":200,"gender":80,"phone_number":120,"email":200,"department_name":140,"position":140,"base_salary_vnd":120}
+        
         for c in cols:
-            self.tree.heading(c, text=headings[c])
+            # --- [SỬA] Thay vì self.tree.heading(c, text=...), ta thêm command=...
+            # Gọi hàm on_sort khi bấm vào tiêu đề
+            self.tree.heading(c, text=headings[c], command=lambda _col=c: self.on_sort(_col))
             self.tree.column(c, width=widths[c], anchor="w")
-
-        self.tree.enable_sorting()
 
         self.pager = PaginationBar(self, self.prev_page, self.next_page)
         self.pager.pack(fill="x", pady=(6,0))
@@ -83,7 +87,13 @@ class EmployeeScreen(ttk.Frame):
                 self.pager.update_state(can_prev=False, can_next=False)
                 
             else:
-                rows = self.emp_mgr.get_all_employees(limit=self.PAGE_SIZE, offset=self.page*self.PAGE_SIZE)
+                sort_order = "DESC" if self.sort_desc else "ASC"
+                rows = self.emp_mgr.get_all_employees(
+                    limit=self.PAGE_SIZE, 
+                    offset=self.page * self.PAGE_SIZE,
+                    sort_by=self.sort_col,
+                    sort_order=sort_order
+                )
                 self.pager.set_page(self.page)
                 total_records = self.emp_mgr.count_employees()
                 import math
@@ -108,6 +118,17 @@ class EmployeeScreen(ttk.Frame):
                 ))
         except Exception as e:
             messagebox.showerror("Error", f"Could not load employees: {e}")
+
+    def on_sort(self, col):
+        """Xử lý khi người dùng bấm vào tiêu đề cột"""
+        if self.sort_col == col:
+            self.sort_desc = not self.sort_desc
+        else:
+            self.sort_col = col
+            self.sort_desc = False
+        
+        self.page = 0
+        self.refresh()
 
     def on_search(self):
         self.search_keyword = self.kw.get()

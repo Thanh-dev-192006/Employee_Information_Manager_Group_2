@@ -96,19 +96,34 @@ class EmployeeManager:
                 conn.close()
     
     @staticmethod
-    def get_all_employees(limit: int = 100, offset: int = 0) -> List[Dict]:
-        """Lấy thông tin tất cả nhân viên và departments"""
+    def get_all_employees(limit: int = 100, offset: int = 0, 
+                          sort_by: str = "employee_id", sort_order: str = "ASC") -> List[Dict]:
         conn = None
         cursor = None
         try:
             conn = DatabaseConnection.get_connection()
             cursor = conn.cursor(dictionary=True)
             
-            query = """
+            col_map = {
+                "employee_id": "e.employee_id",
+                "full_name": "e.full_name",
+                "gender": "e.gender",
+                "phone_number": "e.phone_number",
+                "email": "e.email",
+                "department_name": "d.department_name",
+                "position": "e.position",
+                "base_salary_vnd": "e.base_salary"
+            }
+            
+            db_col = col_map.get(sort_by, "e.employee_id")
+            
+            direction = "DESC" if sort_order.upper() == "DESC" else "ASC"
+
+            query = f"""
                 SELECT e.*, d.department_name, d.location
                 FROM employees e
                 JOIN departments d ON e.department_id = d.department_id
-                ORDER BY e.employee_id
+                ORDER BY {db_col} {direction}
                 LIMIT %s OFFSET %s
             """
             cursor.execute(query, (limit, offset))
