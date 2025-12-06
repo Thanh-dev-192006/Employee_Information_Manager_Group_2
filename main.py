@@ -1,6 +1,6 @@
 import tkinter as tk
-from tkinter import ttk
 
+from tkinter import ttk
 import ttkbootstrap as ttk
 from ttkbootstrap.constants import *
 
@@ -37,6 +37,8 @@ class App(ttk.Window):
 
         self.title("Employee Information Manager - 161Corp")
         self.geometry("1280x800")
+
+        
 
         # 7 managers (đúng yêu cầu đề)
         self.managers = {
