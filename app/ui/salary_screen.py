@@ -1,18 +1,29 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 from datetime import datetime
+import math
 
-from app.ui.widgets import SortableTreeview
+from app.ui.widgets import SortableTreeview, PaginationBar
 from app.dialogs.bonus_deduction_dialog import BonusDeductionDialog
 from app.models.utils.helpers import to_vnd, format_currency_vnd
 from app.models.utils.helpers import month_number_to_name
 
 class SalaryScreen(ttk.Frame):
+    PAGE_SIZE = 15
     def __init__(self, master, managers: dict):
         super().__init__(master, padding=10)
+        style = ttk.Style()
+        style.configure("BigRow.Treeview", font=("Segoe UI", 12), rowheight=50)
+        style.configure("BigRow.Treeview.Heading", font=("Segoe UI", 13, "bold"))
+
         self.managers = managers
         self.sal_mgr = managers["salary"]
         self.emp_mgr = managers["employee"]
+
+        self.page = 0
+
+        self.sort_col = "employee_id"
+        self.sort_desc = False
 
         top = ttk.Frame(self)
         top.pack(fill="x")
@@ -23,9 +34,14 @@ class SalaryScreen(ttk.Frame):
         self.year = tk.IntVar(value=now.year)
 
         ttk.Label(top, text="Month:").pack(side="left", padx=(12,4))
-        ttk.Combobox(top, textvariable=self.month, values=list(range(1,13)), state="readonly", width=5).pack(side="left")
+        cb_month = ttk.Combobox(top, textvariable=self.month, values=list(range(1,13)), state="readonly", width=5)
+        cb_month.pack(side="left")
+        cb_month.bind("<<ComboboxSelected>>", lambda e: self.reset_paging())
+
         ttk.Label(top, text="Year:").pack(side="left", padx=(12,4))
-        ttk.Combobox(top, textvariable=self.year, values=list(range(now.year-2, now.year+3)), state="readonly", width=7).pack(side="left")
+        cb_year = ttk.Combobox(top, textvariable=self.year, values=list(range(now.year-2, now.year+3)), state="readonly", width=7)
+        cb_year.pack(side="left")
+        cb_year.bind("<<ComboboxSelected>>", lambda e: self.reset_paging())
 
         ttk.Button(top, text="Load", command=self.refresh).pack(side="left", padx=8)
 
@@ -52,7 +68,7 @@ class SalaryScreen(ttk.Frame):
         ttk.Button(top, text="Add Bonus/Deduction", command=self.on_add_bd).pack(side="right", padx=6)
 
         cols = ("employee_id","employee_name","base_salary_vnd","total_bonus_vnd","total_deduction_vnd","net_amount_vnd")
-        self.tree = SortableTreeview(self, columns=cols, show="headings", height=16)
+        self.tree = SortableTreeview(self, columns=cols, show="headings", height=15, style="BigRow.Treeview")
         self.tree.pack(fill="both", expand=True, pady=(10,0))
         heads = {
             "employee_id":"ID","employee_name":"Full Name",
@@ -69,26 +85,53 @@ class SalaryScreen(ttk.Frame):
         }
         
         for c in cols:
-            self.tree.heading(c, text=heads[c])
+            self.tree.heading(c, text=heads[c], command=lambda _col=c: self.on_sort(_col))
             if "id" in c:          
                 anchor = "center"
             else:                        
                 anchor = "w"
             self.tree.column(c, width=widths[c], anchor=anchor)
-        self.tree.enable_sorting()
+
+        self.pager = PaginationBar(self, self.prev_page, self.next_page)
+        self.pager.pack(fill="x", pady=(6,0))
 
         self.refresh()
 
-    def _get_selected_emp_id(self):
-        """ Lấy employee_id từ combobox"""
-        return self.emp_map.get(self.employee_id.get())
+    def on_sort(self, col):
+        if self.sort_col == col:
+            self.sort_desc = not self.sort_desc 
+        else:
+            self.sort_col = col
+            self.sort_desc = False 
+        
+        self.page = 0 
+        self.refresh()
 
     def refresh(self):
         for i in self.tree.get_children():
             self.tree.delete(i)
         month_name = month_number_to_name(int(self.month.get()))  
+        sort_order = "DESC" if self.sort_desc else "ASC"
+
         try:
-            rows = self.sal_mgr.get_salary_by_month(month_name, int(self.year.get()))
+            rows = self.sal_mgr.get_salary_by_month(
+                month_name,
+                int(self.year.get()),
+                limit=self.PAGE_SIZE,
+                offset=self.page * self.PAGE_SIZE,
+                sort_by=self.sort_col,    
+                sort_order=sort_order
+                )
+            total_records = self.sal_mgr.count_salary_records()
+            
+            self.pager.set_page(self.page)
+            
+            max_page = math.ceil(total_records / self.PAGE_SIZE) - 1
+            if max_page < 0: max_page = 0
+            
+            can_prev = (self.page > 0)
+            can_next = (self.page < max_page)
+            self.pager.update_state(can_prev, can_next)
             for r in rows:
                 self.tree.insert("", "end", values=(
                     r.get("employee_id"),
@@ -100,6 +143,15 @@ class SalaryScreen(ttk.Frame):
                 ))
         except Exception as e:
             messagebox.showerror("Error", str(e))
+
+    def prev_page(self):
+        if self.page > 0:
+            self.page -= 1
+            self.refresh()
+
+    def next_page(self):
+        self.page += 1
+        self.refresh()
 
     def on_calc(self):
         emp_id = self._get_selected_emp_id()

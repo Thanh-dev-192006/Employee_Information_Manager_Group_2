@@ -117,17 +117,28 @@ class SalaryManager:
                 conn.close()
     
     @staticmethod
-    def get_salary_by_month(month: str, year: int) -> List[Dict]:
+    def get_salary_by_month(month: str, year: int, limit: int = 100, offset: int = 0, sort_by: str = "employee_id", sort_order: str = "ASC") -> List[Dict]:
         conn = None
         cursor = None
         try:
             conn = DatabaseConnection.get_connection()
             cursor = conn.cursor(dictionary=True)
             
-            # Chuyển tên tháng (December) thành số (12) để lọc ngày trong DB
             month_num = month_name_to_number(month)
 
-            query = """
+            sort_mapping = {
+                "employee_id": "e.employee_id",
+                "employee_name": "e.full_name",
+                "base_salary_vnd": "e.base_salary",
+                "total_bonus_vnd": "total_bonus",
+                "total_deduction_vnd": "total_deduction",
+                "net_amount_vnd": "net_amount"
+            }
+            db_sort_col = sort_mapping.get(sort_by, "e.employee_id")
+            
+            db_sort_order = "DESC" if sort_order.upper() == "DESC" else "ASC"
+
+            query = f"""
                 SELECT 
                     e.employee_id,
                     e.full_name as employee_name,
@@ -166,10 +177,11 @@ class SalaryManager:
                     ON e.employee_id = sp.employee_id 
                     AND sp.salary_month = %s AND sp.year = %s
                     
-                ORDER BY e.employee_id
+                ORDER BY {db_sort_col} {db_sort_order}
+                LIMIT %s OFFSET %s
             """
             # Truyền tham số: (tháng_số, năm, tên_tháng, năm)
-            cursor.execute(query, (month_num, year, month, year))
+            cursor.execute(query, (month_num, year, month, year, limit, offset))
             return cursor.fetchall()
             
         except mysql.connector.Error as err:
@@ -179,3 +191,18 @@ class SalaryManager:
                 cursor.close()
             if conn:
                 conn.close()
+                
+    @staticmethod
+    def count_salary_records() -> int:
+        conn = None
+        cursor = None
+        try:
+            conn = DatabaseConnection.get_connection()
+            cursor = conn.cursor()
+            cursor.execute("SELECT COUNT(*) FROM employees")
+            return cursor.fetchone()[0]
+        except mysql.connector.Error:
+            return 0
+        finally:
+            if cursor: cursor.close()
+            if conn: conn.close()
