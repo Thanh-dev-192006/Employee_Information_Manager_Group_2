@@ -9,6 +9,12 @@ Desktop application for managing employees, departments, projects, assignments, 
 
 ---
 
+## Video Demo
+
+[![Xem Video Demo](https://img.youtube.com/vi/tdJsrvs9UFk/0.jpg)](https://youtu.be/tdJsrvs9UFk?si=rzW-GY8Dfs3rAKNu)
+
+> Click vào ảnh trên để xem video demo dự án.
+
 ## Tech Stack
 
 - **Python 3.10+**
