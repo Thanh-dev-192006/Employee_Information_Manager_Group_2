@@ -19,11 +19,24 @@ class AttendanceScreen(ttk.Frame):
 
         self.emps = self.emp_mgr.get_all_employees(limit=1000, offset=0)
         self.emp_map = {f'{e["employee_id"]} - {e["full_name"]}': e["employee_id"] for e in self.emps}
+        self.search_list = list(self.emp_map.keys())
 
-        self.emp_choice = tk.StringVar(value=(next(iter(self.emp_map.keys())) if self.emp_map else ""))
+        self.emp_choice = tk.StringVar(value="")
+
         ttk.Label(top, text="Employee:").pack(side="left", padx=(12,4))
-        ttk.Combobox(top, textvariable=self.emp_choice, values=list(self.emp_map.keys()), state="readonly", width=28)\
-            .pack(side="left")
+        
+        self.cb_emp = ttk.Combobox(
+            top, 
+            textvariable=self.emp_choice, 
+            values=self.search_list, 
+            width=28,
+            height=15
+        )
+        self.cb_emp.pack(side="left")
+        
+        self.cb_emp.bind('<KeyRelease>', self.on_key_release)
+        
+        self.cb_emp.bind('<Return>', self.on_enter)
 
         now = datetime.now()
         self.month = tk.IntVar(value=now.month)
@@ -56,8 +69,30 @@ class AttendanceScreen(ttk.Frame):
 
         self.refresh()
 
+    def on_key_release(self, event):
+        """Khi gõ phím: Chỉ lọc danh sách bên dưới (không mở, không chọn)"""
+        if event.keysym in ['Up', 'Down', 'Left', 'Right', 'Return', 'Tab', 'Escape']:
+            return
+
+        typed = self.cb_emp.get()
+        
+        if typed == '':
+            data = self.search_list
+        else:
+            data = [item for item in self.search_list if typed.lower() in item.lower()]
+
+        self.cb_emp['values'] = data
+
+    def on_enter(self, event):
+        """Khi ấn Enter: Chỉ mở danh sách ra để người dùng tự chọn (không tự điền)"""
+        try:
+            self.cb_emp.tk.call('ttk::combobox::Post', self.cb_emp._w)
+        except:
+            pass
+
     def _emp_id(self):
-        return self.emp_map.get(self.emp_choice.get())
+        txt = self.emp_choice.get()
+        return self.emp_map.get(txt)
 
     def refresh(self):
         for i in self.tree.get_children():
@@ -65,7 +100,9 @@ class AttendanceScreen(ttk.Frame):
 
         emp_id = self._emp_id()
         if not emp_id:
+            self.stats.config(text="Statistics: Please select a valid employee")
             return
+            
         try:
             rows = self.att_mgr.get_attendance_by_employee(emp_id, int(self.month.get()), int(self.year.get()))
             present = sum(1 for r in rows if r.get("status") == "Present")
@@ -89,7 +126,7 @@ class AttendanceScreen(ttk.Frame):
     def on_mark(self):
         emp_id = self._emp_id()
         if not emp_id:
-            messagebox.showwarning("Missing", "Please select an employee")
+            messagebox.showwarning("Missing", "Please select a valid employee from the list")
             return
         dlg = AttendanceDialog(self, self.att_mgr, employee_id=emp_id)
         self.wait_window(dlg)

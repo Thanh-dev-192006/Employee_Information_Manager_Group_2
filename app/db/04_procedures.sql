@@ -17,8 +17,6 @@ CREATE PROCEDURE sp_add_employee (
     IN p_base_salary DECIMAL(10,2)
 )
 BEGIN
-    DECLARE next_id INT;
-
     -- 1. Validate Email trùng
     IF EXISTS (SELECT 1 FROM employees WHERE email = p_email) THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error: Email already exists!';
@@ -44,20 +42,6 @@ BEGIN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Error: Base salary must be greater than 0!';
     END IF;
 
-    -- --- LOGIC MỚI: Reset AUTO_INCREMENT ---
-    -- Tìm ID lớn nhất hiện tại
-    SELECT IFNULL(MAX(employee_id), 0) + 1 INTO next_id FROM employees;
-    
-    -- Đặt lại giá trị AUTO_INCREMENT của bảng (Cần quyền ALTER)
-    -- Lưu ý: MySQL không cho phép dùng biến trong lệnh ALTER TABLE trực tiếp trong Procedure theo cách thông thường.
-    -- Nên ta dùng Dynamic SQL (Prepared Statement).
-    SET @sql = CONCAT('ALTER TABLE employees AUTO_INCREMENT = ', next_id);
-    PREPARE stmt FROM @sql;
-    EXECUTE stmt;
-    DEALLOCATE PREPARE stmt;
-    -- ---------------------------------------
-
-    -- Insert sau khi đã reset ID
     INSERT INTO employees(full_name, gender, date_of_birth, phone_number, email, address, hire_date, department_id, position, base_salary)
     VALUES(p_full_name, p_gender, p_date_of_birth, p_phone, p_email, p_address, p_hire_date, p_department_id, p_position, p_base_salary);
     

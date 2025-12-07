@@ -2,11 +2,21 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from datetime import datetime
 import math
+import unicodedata
 
 from app.ui.widgets import SortableTreeview, PaginationBar
 from app.dialogs.bonus_deduction_dialog import BonusDeductionDialog
 from app.models.utils.helpers import to_vnd, format_currency_vnd
 from app.models.utils.helpers import month_number_to_name
+
+def remove_accents(input_str):
+    """Chuyển đổi chuỗi có dấu thành không dấu (Hải Đăng -> Hai Dang)"""
+    if not input_str:
+        return ""
+    s = str(input_str)
+    s = s.replace("đ", "d").replace("Đ", "D")
+    s = unicodedata.normalize('NFKD', s)
+    return "".join(c for c in s if not unicodedata.combining(c))
 
 class SalaryScreen(ttk.Frame):
     PAGE_SIZE = 15
@@ -50,28 +60,29 @@ class SalaryScreen(ttk.Frame):
         action_bar = ttk.Frame(self)
         action_bar.pack(fill="x", pady=(8, 0))
 
-        # Load danh sách nhân viên
         self.emps = self.emp_mgr.get_all_employees(limit=1000, offset=0)
         self.emp_map = {f'{e["employee_id"]} - {e["full_name"]}': e["employee_id"] for e in self.emps}
 
-        ttk.Label(action_bar, text="Employee:").pack(side="left")
+        ttk.Label(action_bar, text="Employee (Enter to search):").pack(side="left")
         self.employee_id = tk.StringVar(value="")
-        ttk.Combobox(
+        
+        self.cb_emp = ttk.Combobox(
             action_bar,
             textvariable=self.employee_id,
             values=list(self.emp_map.keys()),
-            state="normal",
+            state="normal", 
             width=30
-        ).pack(side="left", padx=(4, 5))
-
+        )
+        self.cb_emp.pack(side="left", padx=(4, 5))
+        self.cb_emp.bind('<Return>', self.on_find_employee)
+        
         ttk.Button(
             action_bar, 
-            text="Find", 
-            bootstyle="info",
-            command=self.on_find_employee
+            text="Refresh", 
+            command=self.on_reset_search
         ).pack(side="left", padx=(0, 12))
+        # -------------------------------------
 
-        ttk.Button(top, text="Auto Calculate Salary", command=self.on_calc).pack(side="right")
         ttk.Button(top, text="Add Bonus/Deduction", command=self.on_add_bd).pack(side="right", padx=6)
 
         cols = ("employee_id","employee_name","base_salary_vnd","total_bonus_vnd","total_deduction_vnd","net_amount_vnd")
@@ -102,6 +113,10 @@ class SalaryScreen(ttk.Frame):
         self.pager = PaginationBar(self, self.prev_page, self.next_page)
         self.pager.pack(fill="x", pady=(6,0))
 
+        self.refresh()
+
+    def reset_paging(self):
+        self.page = 0
         self.refresh()
 
     def on_sort(self, col):
@@ -137,13 +152,15 @@ class SalaryScreen(ttk.Frame):
                 all_rows = self.sal_mgr.get_salary_by_month(
                     month_name,
                     int(self.year.get()),
-                    limit=100000,
+                    limit=100000, 
                     offset=0,
                     sort_by=self.sort_col,
                     sort_order=sort_order
                 )
                 
                 filtered_rows = []
+                kw_normalized = remove_accents(self.search_keyword).lower()
+
                 for r in all_rows:
                     if self.search_exact_id is not None:
                         if r.get("employee_id") == self.search_exact_id:
@@ -151,9 +168,10 @@ class SalaryScreen(ttk.Frame):
                     
                     elif self.search_keyword:
                         emp_id_str = str(r.get("employee_id", ""))
-                        emp_name_str = r.get("employee_name", "").lower()
+                        raw_name = r.get("employee_name", "")
+                        name_normalized = remove_accents(raw_name).lower()
                         
-                        if self.search_keyword in emp_id_str or self.search_keyword in emp_name_str:
+                        if (kw_normalized in emp_id_str) or (kw_normalized in name_normalized):
                             filtered_rows.append(r)
                 
                 total_records = len(filtered_rows)
@@ -197,7 +215,7 @@ class SalaryScreen(ttk.Frame):
         self.page += 1
         self.refresh()
 
-    def on_find_employee(self):
+    def on_find_employee(self, event=None):
         raw_text = self.employee_id.get().strip()
         
         self.search_keyword = ""
@@ -217,29 +235,23 @@ class SalaryScreen(ttk.Frame):
                 pass
         
         if self.search_exact_id is None:
-            self.search_keyword = raw_text.lower()
+            self.search_keyword = raw_text
             
         self.page = 0
         self.refresh()
+
+    def on_reset_search(self):
+        """Xóa tìm kiếm và quay về danh sách đầy đủ"""
+        self.employee_id.set("")  
+        self.search_keyword = ""  
+        self.search_exact_id = None
+        self.page = 0
+        self.refresh()  
 
     def _get_selected_emp_id(self):
         txt = self.employee_id.get()
         if not txt: return None
         return self.emp_map.get(txt)
-
-    def on_calc(self):
-        emp_id = self._get_selected_emp_id()
-        if not emp_id:
-            messagebox.showwarning("Missing", "Please select an employee")
-            return
-
-        month_name = month_number_to_name(int(self.month.get()))
-        try:
-            res = self.sal_mgr.calculate_salary(emp_id, month_name, int(self.year.get()))
-            messagebox.showinfo("OK", res.get("message","Salary calculated"))
-            self.refresh()
-        except Exception as e:
-            messagebox.showerror("Error", str(e))
 
     def on_add_bd(self):
         dlg = BonusDeductionDialog(self, self.managers)

@@ -29,10 +29,14 @@ class EmployeeScreen(ttk.Frame):
         actions.pack(fill="x", pady=(10, 6))
 
         self.kw = tk.StringVar()
-        ttk.Label(actions, text="Search:").pack(side="left")
-        ttk.Entry(actions, textvariable=self.kw, width=30).pack(side="left", padx=6)
-        ttk.Button(actions, text="Search", command=self.on_search).pack(side="left")
-        ttk.Button(actions, text="Clear", command=self.on_clear).pack(side="left", padx=6)
+        ttk.Label(actions, text="Search (Enter):").pack(side="left")
+        
+        self.entry_search = ttk.Entry(actions, textvariable=self.kw, width=30)
+        self.entry_search.pack(side="left", padx=6)
+        self.entry_search.bind('<Return>', self.on_search)
+        
+
+        ttk.Button(actions, text="Refresh", command=self.on_clear).pack(side="left", padx=6)
 
         ttk.Button(actions, text="Add", command=self.on_add).pack(side="right")
         ttk.Button(actions, text="Edit", command=self.on_edit).pack(side="right", padx=6)
@@ -141,7 +145,8 @@ class EmployeeScreen(ttk.Frame):
         self.page = 0
         self.refresh()
 
-    def on_search(self):
+    def on_search(self, event=None):
+        """Tìm kiếm khi nhấn Enter (hoặc gọi hàm)"""
         self.search_keyword = self.kw.get()
         self.search_mode = True
         self.page = 0
