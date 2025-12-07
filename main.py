@@ -35,7 +35,7 @@ config = {
 def seed_assignments_v2():
     conn = None
     try:
-        print("Đang kết nối database...")
+        print("Connecting database...")
         conn = mysql.connector.connect(**config)
         cursor = conn.cursor()
         
@@ -46,10 +46,9 @@ def seed_assignments_v2():
         proj_ids = [row[0] for row in cursor.fetchall()]
         
         if not emp_ids or not proj_ids:
-            print("LỖI: Không tìm thấy dữ liệu Nhân viên hoặc Dự án.")
+            print("ERROR: Not found employees or projects.")
             return
 
-        print("Đang làm sạch bảng assignments...")
         cursor.execute("DELETE FROM assignments")
         conn.commit()
 
@@ -57,7 +56,7 @@ def seed_assignments_v2():
         target_count = 450
         current_count = 0
         
-        print(f"Đang sinh {target_count} bản ghi phân công...")
+        print(f"Generating {target_count} assignment records...")
         
         while current_count < target_count:
             emp = random.choice(emp_ids)
@@ -78,19 +77,19 @@ def seed_assignments_v2():
                 cursor.execute(query, (emp, proj, role, date_str, hours))
                 current_count += 1
                 if current_count % 50 == 0:
-                    print(f"-> Đã tạo {current_count}/{target_count}...")
+                    print(f"-> Created {current_count}/{target_count}...")
             except mysql.connector.Error as err:
                 if err.errno == 1062: # Duplicate entry
                     continue
                 else:
-                    print(f"Lỗi khác: {err}")
+                    print(f"Other error: {err}")
 
         conn.commit()
-        print(f"=== THÀNH CÔNG ===")
-        print(f"Tổng số bản ghi assignments hiện tại: {current_count}")
+        print(f"=== Success ===")
+        print(f"Total number of assignment records: {current_count}")
         
     except mysql.connector.Error as err:
-        print(f"Lỗi kết nối: {err}")
+        print(f"Connection error: {err}")
     finally:
         if conn and conn.is_connected():
             conn.close()
