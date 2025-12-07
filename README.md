@@ -102,8 +102,8 @@ config = {
 ```python
 config = {
     "host": "localhost",
-    "user": "root",  # Tên user MySQL của bạn
-    "password": "T&t121106",  # Sửa lại mật khẩu trước khi chạy
+    "user": "root",           # ⚠️ YOUR USERNAME
+    "password": "T&t121106",  # ⚠️ YOUR PASSWORD
     "database": "employee_manager"
 }
 
