@@ -98,7 +98,7 @@ config = {
     "use_unicode": True,
 }
 ```
-**Step 1**: Edit `main.py`
+**Step 2**: Edit `main.py`
 ```python
 config = {
     "host": "localhost",
