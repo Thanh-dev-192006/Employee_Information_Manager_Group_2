@@ -6,7 +6,7 @@ class DatabaseConnection:
         config = {
             "host": "localhost",
             "user": "root",  # Tên user MySQL của bạn
-            "password": "your_password",   # Sửa lại mật khẩu trước khi chạy
+            "password": "T&t121106",   # Sửa lại mật khẩu trước khi chạy
             "database": "employee_manager",
             "charset": "utf8mb4",
             "use_unicode": True,
