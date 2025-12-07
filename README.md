@@ -211,15 +211,6 @@ numpy==1.24.3
 
 ---
 
-## Team Members
-
-- **Team Leader**: [Name] - Database Design + Backend + Coordination
-- **Member A**: [Name] - Database Design
-- **Member B**: [Name] - Backend Development  
-- **Member C**: [Name] - Frontend GUI + Documentation
-
----
-
 ## License
 
 Educational project for Database Management course.

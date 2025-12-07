@@ -24,11 +24,11 @@ from app.ui.dashboard import Dashboard
 import mysql.connector
 import random
 
-# --- CẤU HÌNH KẾT NỐI ---
+# --- CONNECTION CONFIGURATION ---
 config = {
     "host": "localhost",
-    "user": "root",  # Tên user MySQL của bạn
-    "password": "T&t121106",  # Sửa lại mật khẩu trước khi chạy
+    "user": "root",           # Your username
+    "password": "T&t121106",  # Update your password before running
     "database": "employee_manager"
 }
 
