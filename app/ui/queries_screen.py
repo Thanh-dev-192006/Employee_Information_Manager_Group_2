@@ -43,10 +43,6 @@ class QueriesScreen(ttk.Frame):
             return self.query_mgr.query_employee_project_manager()
         return self.query_mgr.query_above_average_salary()
         
-
-  
-    
-
     def run(self):
         try:
             self._raw = self._call()
@@ -80,10 +76,13 @@ class QueriesScreen(ttk.Frame):
         for c in cols:
             self.tree.heading(c, text=c)
             w = special_widths.get(c, 150)
-            if "_id" in c or c == "id" or "total_assignments" in c: 
+            
+            if ("_id" in c or c == "id" or "total_assignments" in c or 
+                c in ["base_salary", "hours_worked", "overall_avg_base_salary", "difference"]): 
                 anchor = "center"
             else: 
                 anchor = "w"
+            
             self.tree.column(c, width=w, anchor=anchor)
         self.tree.enable_sorting()
 

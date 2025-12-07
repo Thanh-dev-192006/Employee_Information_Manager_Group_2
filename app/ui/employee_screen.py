@@ -35,8 +35,7 @@ class EmployeeScreen(ttk.Frame):
         self.entry_search.pack(side="left", padx=6)
         self.entry_search.bind('<Return>', self.on_search)
         
-
-        ttk.Button(actions, text="Refresh", command=self.on_clear).pack(side="left", padx=6)
+        ttk.Button(actions, text="Clear", command=self.on_clear).pack(side="left", padx=6)
 
         ttk.Button(actions, text="Add", command=self.on_add).pack(side="right")
         ttk.Button(actions, text="Edit", command=self.on_edit).pack(side="right", padx=6)
@@ -47,7 +46,7 @@ class EmployeeScreen(ttk.Frame):
         self.tree.pack(fill="both", expand=True)
 
         self.sort_col = "employee_id"
-        self.sort_desc = False  # False = Tăng dần (ASC), True = Giảm dần (DESC)
+        self.sort_desc = False
 
         headings = {
             "employee_id": "ID",
@@ -72,10 +71,12 @@ class EmployeeScreen(ttk.Frame):
         
         for c in cols:
             self.tree.heading(c, text=headings[c], command=lambda _col=c: self.on_sort(_col))
-            if c == "employee_id":
+            
+            if c in ["employee_id", "gender", "phone_number", "base_salary_vnd"]:
                 anchor = "center"
             else:
                 anchor = "w"
+            
             self.tree.column(c, width=widths[c], anchor=anchor)
 
         self.pager = PaginationBar(self, self.prev_page, self.next_page)
@@ -135,7 +136,6 @@ class EmployeeScreen(ttk.Frame):
             messagebox.showerror("Error", f"Could not load employees: {e}")
 
     def on_sort(self, col):
-        """Xử lý khi người dùng bấm vào tiêu đề cột"""
         if self.sort_col == col:
             self.sort_desc = not self.sort_desc
         else:
@@ -146,7 +146,6 @@ class EmployeeScreen(ttk.Frame):
         self.refresh()
 
     def on_search(self, event=None):
-        """Tìm kiếm khi nhấn Enter (hoặc gọi hàm)"""
         self.search_keyword = self.kw.get()
         self.search_mode = True
         self.page = 0

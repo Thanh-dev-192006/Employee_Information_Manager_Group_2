@@ -30,6 +30,7 @@ class DepartmentScreen(ttk.Frame):
         ttk.Label(left, text="Department List").pack(anchor="w")
         self.dept_tree = SortableTreeview(left, columns=("department_id","department_name","location","employee_count"), show="headings", height=16)
         self.dept_tree.pack(fill="both", expand=True, pady=(4,0))
+        
         for c,t,w in [
             ("department_id","ID",60),
             ("department_name","Department Name",160),
@@ -37,13 +38,21 @@ class DepartmentScreen(ttk.Frame):
             ("employee_count","Employees",80),
         ]:
             self.dept_tree.heading(c, text=t)
-            self.dept_tree.column(c, width=w, anchor="w")
+            
+            if c in ["department_id", "employee_count"]:
+                anchor = "center"
+            else:
+                anchor = "w"
+            
+            self.dept_tree.column(c, width=w, anchor=anchor)
+            
         self.dept_tree.enable_sorting()
         self.dept_tree.bind("<<TreeviewSelect>>", lambda e: self.show_employees())
 
         ttk.Label(right, text="Employees in Department (click department on left)").pack(anchor="w")
         self.emp_tree = SortableTreeview(right, columns=("employee_id","full_name","position","email"), show="headings", height=16)
         self.emp_tree.pack(fill="both", expand=True, pady=(4,0))
+        
         for c,t,w in [
             ("employee_id","ID",60),
             ("full_name","Full Name",200),
@@ -51,7 +60,11 @@ class DepartmentScreen(ttk.Frame):
             ("email","Email",240),
         ]:
             self.emp_tree.heading(c, text=t)
-            self.emp_tree.column(c, width=w, anchor="w")
+            if c == "employee_id":
+                self.emp_tree.column(c, width=w, anchor="center")
+            else:
+                self.emp_tree.column(c, width=w, anchor="w")
+                
         self.emp_tree.enable_sorting()
 
         self.refresh()
@@ -85,7 +98,6 @@ class DepartmentScreen(ttk.Frame):
         if not dept_id:
             return
         try:
-            # backend không có get_employees_by_department => lấy nhiều rồi filter (dataset nhóm thường nhỏ)
             emps = self.emp_mgr.get_all_employees(limit=10000, offset=0)
             emps = [e for e in emps if int(e.get("department_id")) == dept_id]
             for e in emps:
@@ -109,7 +121,6 @@ class DepartmentScreen(ttk.Frame):
             messagebox.showwarning("Missing", "Select a department to edit")
             return
         try:
-            # dept_mgr không có get_by_id => lấy list rồi tìm
             dept = next((d for d in self.dept_mgr.get_all_departments() if int(d["department_id"]) == dept_id), None)
             if not dept:
                 messagebox.showerror("Error", "Department not found")

@@ -9,6 +9,7 @@ from app.dialogs.bonus_deduction_dialog import BonusDeductionDialog
 from app.models.utils.helpers import to_vnd, format_currency_vnd
 from app.models.utils.helpers import month_number_to_name
 
+# --- Hàm hỗ trợ bỏ dấu tiếng Việt ---
 def remove_accents(input_str):
     """Chuyển đổi chuỗi có dấu thành không dấu (Hải Đăng -> Hai Dang)"""
     if not input_str:
@@ -60,12 +61,14 @@ class SalaryScreen(ttk.Frame):
         action_bar = ttk.Frame(self)
         action_bar.pack(fill="x", pady=(8, 0))
 
+        # Load danh sách nhân viên
         self.emps = self.emp_mgr.get_all_employees(limit=1000, offset=0)
         self.emp_map = {f'{e["employee_id"]} - {e["full_name"]}': e["employee_id"] for e in self.emps}
 
         ttk.Label(action_bar, text="Employee (Enter to search):").pack(side="left")
         self.employee_id = tk.StringVar(value="")
         
+        # Combobox tìm kiếm
         self.cb_emp = ttk.Combobox(
             action_bar,
             textvariable=self.employee_id,
@@ -76,12 +79,12 @@ class SalaryScreen(ttk.Frame):
         self.cb_emp.pack(side="left", padx=(4, 5))
         self.cb_emp.bind('<Return>', self.on_find_employee)
         
+        # Nút Refresh/Clear
         ttk.Button(
             action_bar, 
             text="Refresh", 
             command=self.on_reset_search
         ).pack(side="left", padx=(0, 12))
-        # -------------------------------------
 
         ttk.Button(top, text="Add Bonus/Deduction", command=self.on_add_bd).pack(side="right", padx=6)
 
@@ -104,10 +107,12 @@ class SalaryScreen(ttk.Frame):
         
         for c in cols:
             self.tree.heading(c, text=heads[c], command=lambda _col=c: self.on_sort(_col))
-            if "id" in c:          
-                anchor = "center"
-            else:                        
+            
+            if c == "employee_name":
                 anchor = "w"
+            else:
+                anchor = "center"
+            
             self.tree.column(c, width=widths[c], anchor=anchor)
 
         self.pager = PaginationBar(self, self.prev_page, self.next_page)
@@ -241,12 +246,11 @@ class SalaryScreen(ttk.Frame):
         self.refresh()
 
     def on_reset_search(self):
-        """Xóa tìm kiếm và quay về danh sách đầy đủ"""
-        self.employee_id.set("")  
-        self.search_keyword = ""  
+        self.employee_id.set("")
+        self.search_keyword = ""
         self.search_exact_id = None
         self.page = 0
-        self.refresh()  
+        self.refresh()
 
     def _get_selected_emp_id(self):
         txt = self.employee_id.get()

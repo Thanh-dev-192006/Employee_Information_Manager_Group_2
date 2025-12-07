@@ -38,14 +38,25 @@ class ProjectScreen(ttk.Frame):
             "budget_vnd": "Budget", "status": "Status", "department_name": "Department",
             "total_employees": "Employees", "total_hours_worked": "Hours Worked"
         }
+        
         for c in cols:
             self.tree.heading(c, text=heads[c])
-            self.tree.column(c, width=130, anchor="w")
             
-        self.tree.column("project_id", width=60, anchor="center")
-        self.tree.column("project_name", width=250)
-        self.tree.column("budget_vnd", width=160)
-        self.tree.column("department_name", width=180)
+            if c in ["project_name", "department_name"]:
+                anchor = "w"
+            else:
+                anchor = "center"
+            
+            width = 130
+            if c == "project_id": width = 60
+            if c == "project_name": width = 250
+            if c == "department_name": width = 180
+            if c == "budget_vnd": width = 160
+            if c in ["total_employees", "total_hours_worked"]: width = 100
+            
+            self.tree.column(c, width=width, anchor=anchor)
+        # ---------------------------------
+        
         self.tree.enable_sorting()
 
         self.refresh()
