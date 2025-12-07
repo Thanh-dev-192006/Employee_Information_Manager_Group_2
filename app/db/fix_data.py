@@ -5,7 +5,7 @@ import random
 config = {
     "host": "localhost",
     "user": "root",
-    "password": "T&t121106",  # Nhớ kiểm tra lại mật khẩu của bạn
+    "password": "Thanh@123",  # Nhớ kiểm tra lại mật khẩu của bạn
     "database": "employee_manager"
 }
 
