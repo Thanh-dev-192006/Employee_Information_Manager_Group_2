@@ -98,8 +98,16 @@ config = {
     "use_unicode": True,
 }
 ```
+**Step 1**: Edit `main.py`
+```python
+config = {
+    "host": "localhost",
+    "user": "root",  # Tên user MySQL của bạn
+    "password": "T&t121106",  # Sửa lại mật khẩu trước khi chạy
+    "database": "employee_manager"
+}
 
-**Step 2**: Import SQL scripts (in order)
+**Step 3**: Import SQL scripts (in order)
 ```bash
 mysql -u root -p -e "CREATE DATABASE IF NOT EXISTS employee_manager CHARACTER SET utf8mb4;"
 
