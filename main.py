@@ -39,7 +39,6 @@ def seed_assignments_v2():
         conn = mysql.connector.connect(**config)
         cursor = conn.cursor()
         
-        # 1. Lấy danh sách ID
         cursor.execute("SELECT employee_id FROM employees")
         emp_ids = [row[0] for row in cursor.fetchall()]
         
@@ -50,12 +49,10 @@ def seed_assignments_v2():
             print("LỖI: Không tìm thấy dữ liệu Nhân viên hoặc Dự án.")
             return
 
-        # 2. Xóa dữ liệu cũ để tránh lỗi trùng lặp
         print("Đang làm sạch bảng assignments...")
         cursor.execute("DELETE FROM assignments")
         conn.commit()
 
-        # 3. Sinh dữ liệu: MỤC TIÊU 450 BẢN GHI
         roles = ['Developer', 'Tester', 'Project Manager', 'Designer', 'Business Analyst', 'DevOps', 'Consultant', 'Architect']
         target_count = 450
         current_count = 0
@@ -63,13 +60,11 @@ def seed_assignments_v2():
         print(f"Đang sinh {target_count} bản ghi phân công...")
         
         while current_count < target_count:
-            # Chọn ngẫu nhiên
             emp = random.choice(emp_ids)
             proj = random.choice(proj_ids)
             role = random.choice(roles)
-            hours = random.randint(10, 300) # Giờ làm việc phong phú hơn
+            hours = random.randint(10, 300)
             
-            # Ngày ngẫu nhiên trong năm 2024-2025
             month = random.randint(1, 12)
             day = random.randint(1, 28)
             year = random.choice([2024, 2025])
@@ -82,11 +77,9 @@ def seed_assignments_v2():
             try:
                 cursor.execute(query, (emp, proj, role, date_str, hours))
                 current_count += 1
-                # In tiến độ mỗi 50 dòng
                 if current_count % 50 == 0:
                     print(f"-> Đã tạo {current_count}/{target_count}...")
             except mysql.connector.Error as err:
-                # Nếu gặp lỗi trùng lặp (1 nhân viên đã ở trong dự án đó rồi) -> Bỏ qua và thử lại
                 if err.errno == 1062: # Duplicate entry
                     continue
                 else:
@@ -107,7 +100,7 @@ if __name__ == "__main__":
 
 class App(ttk.Window):
     def __init__(self):
-        # Chọn theme ở đây (bạn có thể thử: "litera", "cosmo", "flatly", "journal")
+        # Chọn theme ở đây ("litera", "cosmo", "flatly", "journal")
         super().__init__(themename="litera")
 
         style = ttk.Style()
@@ -123,7 +116,7 @@ class App(ttk.Window):
 
         
 
-        # 7 managers (đúng yêu cầu đề)
+        # 7 managers
         self.managers = {
             "employee": EmployeeManager(),
             "department": DepartmentManager(),
@@ -179,7 +172,6 @@ class App(ttk.Window):
         screen = self.screens.get(key)
         if screen:
             screen.tkraise()
-            # Nếu là dashboard thì gọi refresh để cập nhật số liệu mới nhất
             if key == "dashboard" and hasattr(screen, "refresh_dashboard"):
                 screen.refresh_dashboard()
 
