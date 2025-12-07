@@ -1,136 +1,221 @@
 # Employee_Information_Manager_Group_2
-A desktop application (Python / Tkinter + **ttkbootstrap**) to manage **Employees, Departments, Projects, Assignments, Attendance, and Bonus/Deduction**.  
-Includes an **Analytics / Queries** tab with **CSV Export** for data analysis and reporting.
+# Employee Information Manager - Group 2
 
-> This README is for the **code repository** (how to build/run/demo). The academic report (Overleaf) is a separate document.
+Desktop application for managing employees, departments, projects, assignments, attendance, salary, and bonus/deductions.
 
----
-
-## 1) Features (aligned with current code)
-- CRUD for **Employees / Departments / Projects / Assignments / Attendance / Bonus–Deduction**
-- Validations (e.g., **hours 0–24**, required fields)
-- UX niceties: default date = **today** in dialogs
-- **Queries** tab with four predefined queries:
-  1) INNER JOIN — Employee–Project (role, salary)
-  2) LEFT JOIN — All employees (including those without projects)
-  3) Multi-table — Employee–Project–**Manager**
-  4) Analytic — Employees whose **average assignment salary** is above the **global assignment average**
-- **Export to CSV** from the Queries tab
+> **Course**: Introduction to Databases  
+> **Institution**: National Economics University  
+> **Team**: Group 2 (4 members)
 
 ---
 
-## 2) Tech Stack
+## Tech Stack
+
 - **Python 3.10+**
-- GUI: **Tkinter** (stdlib) + **ttkbootstrap**
-- Database: **MySQL 8.x**
-- MySQL driver: **mysql-connector-python**
+- **GUI**: ttkbootstrap (Tkinter-based)
+- **Database**: MySQL 8.x (InnoDB engine, utf8mb4 charset)
+- **Visualization**: Matplotlib
+- **Driver**: mysql-connector-python
 
 ---
 
-## 3) Repository Layout (key files in this project)
+## Repository Structure
 ```
-main.py                      # Application entry point
-queries_screen.py            # GUI for Queries + CSV Export
-employee.py / department.py / project.py / assignment.py / attendance.py / bonus_deduction.py / salary.py
-query.py                     # QueryManager (4 queries + CSV export)
-database.py / connection.py  # MySQL connection (edit credentials here)
-helpers.py / exceptions.py   # Utilities & custom exceptions
-
-01_schema.sql                # CREATE DATABASE + tables (USE employee_manager)
-02_seed.sql                  # Sample data
-03_views.sql                 # Database views
-04_procedures.sql            # Stored procedures
-05_trigger.sql               # Triggers
+Employee_Information_Manager_Group_2/
+├── app/
+│   ├── db/                          # SQL scripts
+│   │   ├── 01_schema.sql           # Tables (7 tables)
+│   │   ├── 02_seed.sql             # Sample data (161 employees)
+│   │   ├── 03_views.sql            # Views (3 views)
+│   │   ├── 04_procedures.sql       # Stored procedures (11 procedures)
+│   │   └── 05_trigger.sql          # Triggers (3 triggers)
+│   │
+│   ├── models/                      # Backend managers
+│   │   ├── config/
+    │   │   │   └── database.py         # Edit credentials here
+│   │   ├── manager/                # 8 Manager classes
+│   │   │   ├── employee.py
+│   │   │   ├── department.py
+│   │   │   ├── project.py
+│   │   │   ├── assignment.py
+│   │   │   ├── attendance.py
+│   │   │   ├── salary.py
+│   │   │   ├── bonus_deduction.py
+│   │   │   └── query.py
+│   │   └── utils/
+│   │
+│   ├── dialogs/                     # Popup forms
+│   └── ui/                          # Main screens
+│       ├── dashboard.py            # Dashboard with charts
+│       ├── employee_screen.py
+│       ├── department_screen.py
+│       ├── project_screen.py
+│       ├── attendance_screen.py
+│       ├── salary_screen.py
+│       └── queries_screen.py
+│
+├── main.py                          # Application entry point
+├── requirements.txt
+└── README.md
 ```
-
-> Note: `database.py` currently contains **hard-coded** credentials. Update them to match your local MySQL setup.
 
 ---
 
-## 4) Setup
+## Setup & Run
 
-### 4.1 Clone
+### 1. Clone Repository
 ```bash
 git clone <REPO_URL>
-cd <repo-folder>
+cd Employee_Information_Manager_Group_2
 ```
 
-### 4.2 Python virtual environment
-**Windows (PowerShell):**
+### 2️. Install Python Dependencies
+
+**Windows**:
 ```powershell
 py -m venv .venv
 .venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-**macOS/Linux (Terminal):**
+**macOS/Linux**:
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-### 4.3 Configure MySQL
-1) **Edit credentials** in `database.py` (host, user, password, database). Default DB name in scripts: `employee_manager`.
-2) Create DB and import scripts **in order**:
-```bash
-mysql -u <user> -p -e "CREATE DATABASE IF NOT EXISTS employee_manager CHARACTER SET utf8mb4;"
-mysql -u <user> -p employee_manager < 01_schema.sql
-mysql -u <user> -p employee_manager < 02_seed.sql
-mysql -u <user> -p employee_manager < 03_views.sql
-mysql -u <user> -p employee_manager < 04_procedures.sql
-mysql -u <user> -p employee_manager < 05_trigger.sql
+### 3️. Configure Database
+
+**Step 1**: Edit `app/models/config/database.py`
+```python
+config = {
+    "host": "localhost",
+    "user": "root",           # ⚠️ YOUR USERNAME
+    "password": "YOUR_PASS",  # ⚠️ YOUR PASSWORD
+    "database": "employee_manager",
+    "charset": "utf8mb4",
+    "use_unicode": True,
+}
 ```
-> Ensure your MySQL server is running (default host `localhost`, port `3306`).
 
----
+**Step 2**: Import SQL scripts (in order)
+```bash
+mysql -u root -p -e "CREATE DATABASE IF NOT EXISTS employee_manager CHARACTER SET utf8mb4;"
 
-## 5) Run
-From the repository root (with venv activated):
+mysql -u root -p employee_manager < app/db/01_schema.sql
+mysql -u root -p employee_manager < app/db/02_seed.sql
+mysql -u root -p employee_manager < app/db/03_views.sql
+mysql -u root -p employee_manager < app/db/04_procedures.sql
+mysql -u root -p employee_manager < app/db/05_trigger.sql
+```
+
+> ⚠️ **Important**: Run scripts **in exact order** (01 → 05)
+
+### 4️. Run Application
 ```bash
 python main.py
 ```
 
-If you use a different entrypoint path in your repo layout, adjust accordingly.
+---
+
+## Features
+
+### 7 Main Tabs
+1. **Dashboard** - KPIs and charts (Matplotlib)
+2. **Employees** - CRUD with search/pagination/sorting
+3. **Departments** - Department management
+4. **Projects** - Project tracking and assignment
+5. **Attendance** - Daily check-in/out tracking
+6. **Salary** - Monthly salary calculation
+7. **Queries** - 4 complex SQL queries + CSV export
+
+### Key Capabilities
+- Full CRUD operations for all entities
+- Data validation (phone, email, dates, salary)
+- Vietnamese text support (utf8mb4)
+- Search and filter
+- Pagination (15 records/page)
+- Sortable tables (click headers)
+- CSV export for queries
+- Currency display (VND format)
 
 ---
 
-## 6) Queries Tab & CSV Export (for demo / Slide 7)
-Open the **Queries** tab in the app, choose one of the predefined options, click **Run**, then **Export CSV** to save results.
+## Database Schema
 
-**Analytic query (#4) per assignment (average *assignment* salary > global average):**
+### 7 Tables
+- `departments` (7 departments)
+- `employees` (160 employees)
+- `projects` (10 projects)
+- `assignments` (~600 assignments)
+- `attendance` (daily records)
+- `salary_payments` (monthly records)
+- `bonus_deductions` (bonus/penalties)
+
+### Additional Components
+- **3 Views**: Optimized queries for salary, attendance, projects
+- **11 Stored Procedures**: Business logic validation
+- **3 Triggers**: Audit logging for bonus/deductions
+
+---
+
+## Troubleshooting
+
+### MySQL Connection Error
+```
+Error: Access denied for user 'root'@'localhost'
+```
+-> Check credentials in `app/models/config/database.py`
+
+### Table Not Found Error
+```
+Error: Table 'employees' doesn't exist
+```
+-> Run SQL scripts in order: `01_schema.sql` first
+
+### Vietnamese Text Shows `???`
+```
+Error: Character encoding issue
+```
+-> Ensure database uses `utf8mb4`:
 ```sql
-WITH emp_avg AS (
-  SELECT a.employee_id, AVG(a.salary) AS avg_salary
-  FROM assignments a
-  GROUP BY a.employee_id
-),
-global_avg AS (
-  SELECT AVG(salary) AS g_avg FROM assignments
-)
-SELECT e.employee_id, e.full_name, d.department_name, emp_avg.avg_salary
-FROM emp_avg
-CROSS JOIN global_avg
-JOIN employees e ON e.employee_id = emp_avg.employee_id
-LEFT JOIN departments d ON d.department_id = e.department_id
-WHERE emp_avg.avg_salary > global_avg.g_avg
-ORDER BY emp_avg.avg_salary DESC;
+ALTER DATABASE employee_manager CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 ```
 
-> The other three queries (INNER JOIN, LEFT JOIN, Multi-table with Manager) are implemented in `query.py` and invoked by `queries_screen.py`.
-
-**Screenshot tip:** resize columns to show **Name / Department / Salary** clearly and capture ~10–15 rows.
-
----
-
-## 7) Troubleshooting
-- **MySQL connection error** → re-check credentials in `database.py`; test with `mysql -u <user> -p`; ensure DB exists.
-- **GUI doesn’t appear on WSL** → use native Windows Python instead of WSL for Tkinter.
-- **CSV encoding** → use UTF‑8; in Excel, import via *Data → From Text/CSV* if needed.
+### GUI Not Showing (WSL)
+```
+Error: no display name
+```
+➡️ Use native Windows Python (not WSL) for Tkinter apps
 
 ---
 
-## 8) License
-Coursework project for educational purposes.
+## Dependencies
+
+See `requirements.txt`:
+```
+ttkbootstrap==1.10.1
+mysql-connector-python==8.0.33
+matplotlib==3.7.1
+numpy==1.24.3
+```
+
+---
+
+## Team Members
+
+- **Team Leader**: [Name] - Database Design + Backend + Coordination
+- **Member A**: [Name] - Database Design
+- **Member B**: [Name] - Backend Development  
+- **Member C**: [Name] - Frontend GUI + Documentation
+
+---
+
+## License
+
+Educational project for Database Management course.
+
+---
+
+**Last Updated**: December 2024

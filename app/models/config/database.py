@@ -5,8 +5,8 @@ class DatabaseConnection:
     def get_connection():
         config = {
             "host": "localhost",
-            "user": "root",
-            "password": "Thanh@123",
+            "user": "root",  # Tên user MySQL của bạn
+            "password": "your_password",   # Sửa lại mật khẩu trước khi chạy
             "database": "employee_manager",
             "charset": "utf8mb4",
             "use_unicode": True,
