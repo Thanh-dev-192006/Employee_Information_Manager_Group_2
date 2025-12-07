@@ -1,7 +1,23 @@
-from datetime import date
 import tkinter as tk
 from tkinter import ttk, messagebox
+from datetime import date
+import unicodedata  # Thư viện xử lý tiếng Việt
+
 from app.models.utils.helpers import parse_display_date, parse_currency_input, to_db_money, format_display_date
+
+def remove_accents(input_str):
+    """
+    Chuyển đổi chuỗi có dấu thành không dấu
+    """
+    if not input_str:
+        return ""
+    s = str(input_str)
+    # Xử lý chữ Đ/đ
+    s = s.replace("đ", "d").replace("Đ", "D")
+    # Chuẩn hóa unicode
+    s = unicodedata.normalize('NFKD', s)
+    # Lọc bỏ dấu
+    return "".join(c for c in s if not unicodedata.combining(c))
 
 class BonusDeductionDialog(tk.Toplevel):
     def __init__(self, master, managers: dict):
@@ -14,19 +30,34 @@ class BonusDeductionDialog(tk.Toplevel):
 
         self.emps = self.emp_mgr.get_all_employees(limit=10000, offset=0)
         self.emp_map = {f'{e["employee_id"]} - {e["full_name"]}': e["employee_id"] for e in self.emps}
+        self.search_list = list(self.emp_map.keys())
 
-        self.emp = tk.StringVar(value=(next(iter(self.emp_map.keys())) if self.emp_map else ""))
-        self.typ = tk.StringVar(value="Bonus")
-        self.amount = tk.StringVar(value="1000000")
+        self.emp_var = tk.StringVar(value="")
+        
+        self.typ = tk.StringVar(value="")
+        self.amount = tk.StringVar(value="")
         self.reason = tk.StringVar(value="")
         self.eff = tk.StringVar(value=format_display_date(date.today()))
 
         body = ttk.Frame(self, padding=12)
         body.pack(fill="both", expand=True)
 
-        ttk.Label(body, text="Employee").grid(row=0, column=0, sticky="w", pady=4)
-        ttk.Combobox(body, textvariable=self.emp, values=list(self.emp_map.keys()), state="readonly", width=36)\
-            .grid(row=0, column=1, sticky="ew", pady=4)
+        ttk.Label(body, text="Employee (Type & Enter to search)").grid(row=0, column=0, sticky="w", pady=4)
+        
+        self.cb_emp = ttk.Combobox(
+            body, 
+            textvariable=self.emp_var, 
+            values=self.search_list, 
+            state="normal",
+            width=36,
+            height=15
+        )
+        self.cb_emp.grid(row=0, column=1, sticky="ew", pady=4)
+        
+        self.cb_emp.bind('<KeyRelease>', self.on_key_release)
+        
+        self.cb_emp.bind('<Return>', self.on_enter)
+        # -------------------------------------
 
         ttk.Label(body, text="Type").grid(row=1, column=0, sticky="w", pady=4)
         ttk.Combobox(body, textvariable=self.typ, values=["Bonus","Deduction"], state="readonly")\
@@ -50,11 +81,41 @@ class BonusDeductionDialog(tk.Toplevel):
         self.grab_set()
         self.transient(master)
 
+    def on_key_release(self, event):
+        """Lọc danh sách khi gõ (hỗ trợ không dấu)"""
+        if event.keysym in ['Up', 'Down', 'Left', 'Right', 'Return', 'Tab', 'Escape']:
+            return
+
+        typed = self.cb_emp.get()
+        
+        if typed == '':
+            data = self.search_list
+        else:
+            kw = remove_accents(typed).lower()
+            
+            data = []
+            for item in self.search_list:
+                item_norm = remove_accents(item).lower()
+                
+                if kw in item_norm:
+                    data.append(item)
+
+        self.cb_emp['values'] = data
+
+    def on_enter(self, event):
+        """Khi ấn Enter: Mở danh sách ra để chọn"""
+        try:
+            self.cb_emp.tk.call('ttk::combobox::Post', self.cb_emp._w)
+        except:
+            pass
+
     def on_save(self):
         try:
-            emp_id = self.emp_map.get(self.emp.get())
+            emp_name = self.emp_var.get()
+            emp_id = self.emp_map.get(emp_name)
+            
             if not emp_id:
-                raise ValueError("Invalid employee")
+                raise ValueError("Invalid employee. Please select from the list.")
 
             vnd = parse_currency_input(self.amount.get())
             if vnd <= 0:

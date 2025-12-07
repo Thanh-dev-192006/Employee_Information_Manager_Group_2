@@ -144,11 +144,11 @@ class App(ttk.Window):
             menubar.add_command(label=label, command=lambda: self.show(key))
 
         add("Dashboard", "dashboard")
-        add("Nhân viên", "employee")
-        add("Phòng ban", "department")
-        add("Dự án", "project")
-        add("Chấm công", "attendance")
-        add("Lương", "salary")
+        add("Employee", "employee")
+        add("Department", "department")
+        add("Project", "project")
+        add("Attendance", "attendance")
+        add("Salary", "salary")
         add("Queries", "queries")
 
     def _init_screens(self):
