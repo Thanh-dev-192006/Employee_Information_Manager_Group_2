@@ -104,16 +104,8 @@ config = {
     "use_unicode": True,
 }
 ```
-**Step 2**: Edit `main.py`
-```python
-config = {
-    "host": "localhost",
-    "user": "root",           # ⚠️ YOUR USERNAME
-    "password": "T&t121106",  # ⚠️ YOUR PASSWORD
-    "database": "employee_manager"
-}
 
-**Step 3**: Import SQL scripts (in order)
+**Step 2**: Import SQL scripts (in order)
 ```bash
 mysql -u root -p -e "CREATE DATABASE IF NOT EXISTS employee_manager CHARACTER SET utf8mb4;"
 

@@ -208,7 +208,7 @@ INSERT INTO projects (project_name, start_date, end_date, budget, department_id)
 -- ============================================================
 -- 4. ASSIGNMENTS (~600 bản ghi)
 -- ============================================================
-INSERT INTO assignments (employee_id, project_id, role, assigned_date, hours_worked) VALUES
+INSERT IGNORE INTO assignments (employee_id, project_id, role, assigned_date, hours_worked) VALUES
 (1, 1, 'Project Lead', '2024-01-01', 200),
 (2, 1, 'Recruiter', '2024-01-01', 180),
 (3, 1, 'HR Specialist', '2024-02-01', 160),
