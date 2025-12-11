@@ -1,5 +1,4 @@
 # Employee_Information_Manager_Group_2
-# Employee Information Manager - Group 2
 
 Desktop application for managing employees, departments, projects, assignments, attendance, salary, and bonus/deductions.
 
@@ -75,7 +74,7 @@ git clone <REPO_URL>
 cd Employee_Information_Manager_Group_2
 ```
 
-### 2️. Install Python Dependencies
+### 2. Install Python Dependencies
 
 **Windows**:
 ```powershell
@@ -91,14 +90,14 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 3️. Configure Database
+### 3. Configure Database
 
 **Step 1**: Edit `app/models/config/database.py`
 ```python
 config = {
     "host": "localhost",
-    "user": "root",           # ⚠️ YOUR USERNAME
-    "password": "YOUR_PASS",  # ⚠️ YOUR PASSWORD
+    "user": "root",           #  YOUR USERNAME
+    "password": "YOUR_PASS",  #  YOUR PASSWORD
     "database": "employee_manager",
     "charset": "utf8mb4",
     "use_unicode": True,
@@ -116,9 +115,9 @@ mysql -u root -p employee_manager < app/db/04_procedures.sql
 mysql -u root -p employee_manager < app/db/05_trigger.sql
 ```
 
-> ⚠️ **Important**: Run scripts **in exact order** (01 → 05)
+> **Important**: Run scripts **in exact order** (01 → 05)
 
-### 4️. Run Application
+### 4. Run Application
 ```bash
 python main.py
 ```
@@ -193,7 +192,7 @@ ALTER DATABASE employee_manager CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci
 ```
 Error: no display name
 ```
-➡️ Use native Windows Python (not WSL) for Tkinter apps
+-> Use native Windows Python (not WSL) for Tkinter apps
 
 ---
 
